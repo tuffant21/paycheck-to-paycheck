@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Match the expenses collection
+    match /expenses/{documentId} {
+
+      // Create rules
+      allow create: if canCreate();
+
+      // Read rules
+      allow read: if canRead(documentId);
+
+      // Write rules
+      allow update: if canUpdate(documentId);
+
+      // Delete rules
+      allow delete: if canDelete(documentId);
+
+      // Helper functions
+      function isAuthenticated() {
+        return request.auth != null && request.auth.uid != null;
+      }
+
+      function isOwner() {
+        return resource.data.createdBy == request.auth.uid;
+      }
+
+      // Check if the user has a specific role in the ACL
+      function userHasRole(role) {
+        return resource.data.acl[request.auth.uid] == role;
+      }
+
+      // Check if the public role has permission for a specific action
+      function publicHasRole(role) {
+        return resource.data.acl['public'] == role;
+      }
+
+      function containsOnlyFieldsInAllowList() {
+        return request.resource.data.keys().hasOnly(['created', 'modified', 'createdBy', 'headers', 'data', 'acl']);
+      }
+
+      function canCreate() {
+        // Check if the user has permission to write based on ACL
+        return isAuthenticated() &&
+          containsOnlyFieldsInAllowList() &&
+          request.resource.data.keys().hasAll(['createdBy', 'created', 'modified', 'acl']) &&
+          request.resource.data.createdBy == request.auth.uid &&
+          request.resource.data.created is timestamp &&
+          request.resource.data.modified is timestamp &&
+          request.resource.data.acl is map;
+      }
+
+      function canRead(documentId) {
+        // Check if the user has permission to read based on ACL
+        return isAuthenticated() &&
+          exists(/databases/$(database)/documents/expenses/$(documentId)) &&
+          (
+            isOwner() ||
+            userHasRole('editor') ||
+            userHasRole('viewer') ||
+            publicHasRole('viewer') ||
+            publicHasRole('editor')
+          );
+      }
+
+      function canUpdate(documentId) {
+        let isCreatedByValid = (
+          !('createdBy' in request.resource.data) || // If createdBy is not passed in, ignore the check
+          request.resource.data.createdBy == resource.data.createdBy // Ensure owner is not reassigned if createdBy is present
+        );
+
+        let isCreatedValid = (
+          !('created' in request.resource.data) || // If created is not passed in, ignore the check
+          request.resource.data.created == resource.data.created // Ensure created date is not changed if created is present
+        );
+
+        let isModifiedValid = (
+          request.resource.data.modified != resource.data.modified && // Ensure modified is updated
+          request.resource.data.modified != null && // Ensure modified is not null
+          request.resource.data.modified is timestamp // Ensure modified date is updated
+        );
+
+        let isAclValid = (
+          !('acl' in request.resource.data) || // If acl is not passed in, ignore the check
+          request.resource.data.acl != null && // Ensure acl is not null
+          request.resource.data.acl is map // Ensure acl is a map
+        );
+
+        // Check if the user has permission to write based on ACL
+        return isAuthenticated() &&
+          exists(/databases/$(database)/documents/expenses/$(documentId)) &&
+          (
+            isOwner() ||
+            userHasRole('editor') ||
+            publicHasRole('editor')
+          ) &&
+          containsOnlyFieldsInAllowList() &&
+          // Ensure the owner field in acl and created field cannot be changed
+          isCreatedByValid && // Owner cannot be reassigned
+          isCreatedValid && // Created cannot be changed
+          isModifiedValid && // Modified must be a timestamp
+          isAclValid; // ACL must be a map
+      }
+
+      function canDelete(documentId) {
+        // Check if the user has permission to write based on ACL
+        return isAuthenticated() &&
+          exists(/databases/$(database)/documents/expenses/$(documentId)) &&
+          isOwner();
+      }
+    }
+  }
+}

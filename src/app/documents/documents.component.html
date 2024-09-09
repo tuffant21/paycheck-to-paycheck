@@ -1,0 +1,44 @@
+<div class="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Your Documents</h2>
+    <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" (click)="createDocument()">
+      Create New Document
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <button class="text-sm px-4 py-2 mr-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applyFilter('all')">All Documents</button>
+      <button class="text-sm px-4 py-2 mr-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applyFilter('owned')">Owned by Me</button>
+      <button class="text-sm px-4 py-2 mr-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applyFilter('shared')">Shared with Me</button>
+    </div>
+    <div>
+      <button class="text-sm px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applySort('created')">Created</button>
+      <button class="text-sm px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applySort('modified')">Last Modified</button>
+    </div>
+  </div>
+
+  <!-- Document List -->
+  @for (doc of documents(); track doc.id) {
+    <ul class="divide-y divide-gray-200">
+      <li class="py-4">
+        <a [routerLink]="['/expense-tracker', doc.id]" class="text-blue-500 hover:underline">
+          Document ID: {{ doc.id }} | Created: {{ doc.created | date }} | Modified: {{ doc.modified | date }}
+        </a>
+      </li>
+    </ul>
+  } @empty {
+    <p class="text-center text-gray-600">No documents found.</p>
+  }
+
+  <!-- Pagination Controls -->
+  <div class="flex justify-between items-center mt-6">
+    <button class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" (click)="previousPage()" [disabled]="page() === 0">
+      Previous
+    </button>
+    <button class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" (click)="nextPage()">
+      Next
+    </button>
+  </div>
+</div>
