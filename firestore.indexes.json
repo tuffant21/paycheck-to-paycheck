@@ -1,4 +1,101 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "ASCENDING" },
+        { "fieldPath": "created", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "DESCENDING" },
+        { "fieldPath": "created", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "ASCENDING" },
+        { "fieldPath": "modified", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "DESCENDING" },
+        { "fieldPath": "modified", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acl.editors", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "created", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acl.editors", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "created", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acl.editors", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "modified", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acl.editors", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "modified", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acl.viewers", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "created", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acl.viewers", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "created", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acl.viewers", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "modified", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acl.viewers", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "modified", "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

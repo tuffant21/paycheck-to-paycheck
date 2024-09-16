@@ -1,1 +1,255 @@
-<p>expense-tracker works!</p>
+<div class="max-w-6xl mx-auto mt-10 p-6 bg-white shadow-md rounded">
+  <!-- Document Title and Manage Button -->
+  <div class="flex justify-between items-center mb-6">
+    <!-- Document Title -->
+    <h2 class="text-2xl font-bold text-gray-800">{{ document()?.title || 'New Document' }}</h2>
+
+    <!-- Manage Document Dropdown -->
+    @if (isOwner() || isEditor()) {
+      <div class="relative inline-block text-left">
+        <app-dropdown
+          label="Manage Document"
+          [actions]="getManageDocumentActions()"
+          (dropdownItemClicked)="handleManageDocumentActions($event)"
+        ></app-dropdown>
+      </div>
+    }
+  </div>
+
+  <!-- Bill Table -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead class="bg-gray-50">
+      <tr>
+        @for (header of document()?.headers ?? []; track header) {
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer" (click)="sortTable(header.key)">
+            {{ header.display }}
+            @if (sortBy === header.key) {
+              <span>{{ sortDirection === 'asc' ? '▲' : sortDirection === 'desc' ? '▼' : '' }}</span>
+            }
+          </th>
+        }
+        @if (isOwner() || isEditor()) {
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Actions</th>
+        }
+      </tr>
+      </thead>
+      <tbody>
+        @for (bill of document()?.data ?? []; track bill) {
+          @if (!bill.__disabled) {
+            <tr>
+              @for (header of document()?.headers ?? []; track header) {
+                <td class="px-4 py-2 border-t border-gray-200">
+                  <!-- Editable cell: Display as text, and switch to input on click -->
+<!--                  @if (!editingCell[bill][header.key]) {-->
+                    <span (click)="editCell(bill, header?.key)">
+                      <!-- Handle field type dynamically -->
+                      @if (header.type === 'currency') {
+                        ${{ bill?.[header?.key || ''] | number:'1.2-2' }}
+                      } @else {
+                        {{ bill?.[header?.key || ''] }}
+                      }
+                    </span>
+<!--                  }-->
+
+                  <!-- Input field for editing -->
+<!--                  @if (editingCell[bill][header.key]) {-->
+<!--                    <input-->
+<!--                     [(ngModel)]="bill[header.key]"-->
+<!--                     (blur)="saveCell(bill, header.key)"-->
+<!--                     class="w-full px-2 py-1 border border-gray-300 rounded" />-->
+<!--                  }-->
+                </td>
+              }
+              @if (isOwner() || isEditor()) {
+                <td class="px-4 py-2 border-t border-gray-200">
+                  <app-button
+                    text="Disable"
+                    color="gray"
+                    padding="sm"
+                    (click)="disableBill(bill)"
+                  ></app-button>
+
+                  <app-button
+                    text="Delete"
+                    color="gray"
+                    padding="sm"
+                    (click)="confirmDelete(bill)"
+                  ></app-button>
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add New Bill Button -->
+  @if (isOwner() || isEditor()) {
+    <div class="mt-4">
+      <app-button
+        text="Add New Bill"
+        color="blue"
+        (click)="addNewBill()"
+      ></app-button>
+    </div>
+  }
+
+  <!-- Disabled Bills -->
+  <h2 class="text-2xl font-bold text-gray-800 mt-10 mb-6">Disabled Bills</h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead class="bg-gray-50">
+      <tr>
+        @for (header of document()?.headers ?? []; track header) {
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer" (click)="sortTable(header?.key)">
+            {{ header.display }}
+            @if (sortBy === header.key) {
+              <span>{{ sortDirection === 'asc' ? '▲' : sortDirection === 'desc' ? '▼' : '' }}</span>
+            }
+          </th>
+        }
+        @if (isOwner() || isEditor()) {
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Actions</th>
+        }
+      </tr>
+      </thead>
+      <tbody>
+        @for (bill of document()?.data ?? []; track bill) {
+          @if (bill?.__disabled) {
+            <tr>
+              @for (header of document()?.headers ?? []; track header) {
+                <td class="px-4 py-2 border-t border-gray-200">
+                  @if (header?.type === 'currency') {
+                    ${{ bill?.[header?.key || ''] | number:'1.2-2' }}
+                  } @else {
+                    {{ bill?.[header?.key || ''] }}
+                  }
+                </td>
+              }
+              @if (isOwner() || isEditor()) {
+                <td class="px-4 py-2 border-t border-gray-200">
+                  <app-button
+                    text="Enable"
+                    color="green"
+                    padding="sm"
+                    (click)="enableBill(bill)"
+                  ></app-button>
+                  <app-button
+                    text="Delete"
+                    color="red"
+                    padding="sm"
+                    (click)="confirmDelete(bill)"
+                  ></app-button>
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Delete Document Modal -->
+  @if (isOwner()) {
+    <app-modal
+      [visible]="showDeleteDocumentModal()"
+      title="Delete Document"
+      confirmText="delete"
+      closeText="cancel"
+      (confirmAction)="deleteDocument()"
+      (closeAction)="closeDeleteDocumentModal()"
+    >
+      <p class="text-gray-600">Are you sure you want to delete this document? This action cannot be undone.</p>
+    </app-modal>
+  }
+
+  <!-- Share Document Modal -->
+  @if (isOwner() || isEditor()) {
+    <app-modal
+      [visible]="showShareModal()"
+      title="Manage Sharing"
+      closeText="done"
+      (closeAction)="closeShareModal()"
+    >
+      <!-- Add new user -->
+      <div class="flex items-start space-x-4 mb-4">
+        <!-- Email input and error container -->
+        <div class="flex flex-col w-full">
+          <input
+            type="email"
+            name="email"
+            placeholder="Add people by email"
+            [formControl]="shareEmail"
+            (keyup)="updateEmailError()"
+            (change)="updateEmailError()"
+            (blur)="updateEmailError()"
+            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+          <!-- Error message under email input -->
+          @if (emailError()) {
+            <span class="text-red-600 text-sm">{{ emailError() }}</span>
+          }
+        </div>
+
+        <!-- Role dropdown for new user -->
+        <div class="flex items-center">
+          <app-dropdown
+            [label]="newUserRole || 'Select Role'"
+            [actions]="[
+            { id: 'viewer', label: 'Viewer' },
+            { id: 'editor', label: 'Editor' }
+          ]"
+            (dropdownItemClicked)="newUserRole = $event"
+          ></app-dropdown>
+        </div>
+      </div>
+
+      <div class="flex justify-end mb-4">
+        <app-button
+          text="Add"
+          color="green"
+          clazz="px-10"
+          [disabled]="this.shareEmail.invalid"
+          (click)="shareDocument()"
+        ></app-button>
+      </div>
+
+      @if (flatmapAcl()) {
+        <h4 class="font-semibold mb-2">Shared With:</h4>
+        <ul class="max-h-48 overflow-y-auto border border-gray-200 rounded">
+          @for (acl of flatmapAcl(); track acl) {
+            <li class="flex items-center justify-between hover:bg-gray-100 mb-2">
+              <span class="ml-4 mr-4">{{ acl.email }}</span>
+              <div class="flex items-center">
+                <app-dropdown
+                  [label]="acl.role"
+                  [actions]="[
+                  { id: 'viewer', label: 'Viewer' },
+                  { id: 'editor', label: 'Editor' },
+                  { id: 'remove', label: 'Remove Access' }
+                ]"
+                  (dropdownItemClicked)="handleUpdateAcl(acl, $event)"
+                ></app-dropdown>
+              </div>
+            </li>
+          } @empty {
+            <li class="p-4">Not shared with anyone yet!</li>
+          }
+        </ul>
+      }
+    </app-modal>
+
+    <app-modal
+      [visible]="showConfirmRemoveAccessModal()"
+      title="Remove Access"
+      confirmText="remove"
+      closeText="cancel"
+      (confirmAction)="confirmRemoveAccess()"
+      (closeAction)="cancelRemoveAccess()"
+    >
+      <p class="text-gray-600">Are you sure you want to remove access for {{ pendingRemoveAccess()?.email }}?</p>
+    </app-modal>
+  }
+</div>

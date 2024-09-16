@@ -1,0 +1,70 @@
+<div class="max-w-lg mx-auto mt-10 p-8 bg-white shadow-lg rounded">
+  <!-- Title -->
+  <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Support Paycheck to Paycheck</h2>
+
+  <!-- Description -->
+  <p class="text-center text-gray-600 mb-8">
+    We aim to keep Paycheck to Paycheck free and accessible for everyone. Your support helps us continue developing and maintaining this project. Any amount is appreciated!
+  </p>
+
+  <!-- Donation Options -->
+  <div class="flex flex-col space-y-4 mb-8">
+    <a [href]="getFiveDollarLink()" target="_blank">
+      <app-button
+        text="Donate $5"
+        color="blue"
+        clazz="w-full"
+        padding="lg"
+      ></app-button>
+    </a>
+    <a [href]="getTenDollarLink()" target="_blank">
+      <app-button
+        text="Donate $10"
+        color="blue"
+        clazz="w-full"
+        padding="lg"
+      ></app-button>
+    </a>
+    <a [href]="getTwentyDollarLink()" target="_blank">
+      <app-button
+        text="Donate $20"
+        color="blue"
+        clazz="w-full"
+        padding="lg"
+      ></app-button>
+    </a>
+    <a [href]="getFiftyDollarLink()" target="_blank">
+      <app-button
+        text="Donate $50"
+        color="blue"
+        clazz="w-full"
+        padding="lg"
+      ></app-button>
+    </a>
+    <a [href]="getCustomAmountLink()" target="_blank">
+      <app-button
+        text="Donate Custom Amount"
+        color="blue"
+        clazz="w-full"
+        padding="lg"
+      ></app-button>
+    </a>
+  </div>
+
+  <!-- Payment Integration (Example PayPal Button) -->
+  <div class="text-center">
+    <a href="https://paypal.me/tuffant21" target="_blank">
+      <app-button
+        text="Donate with PayPal"
+        color="green"
+        clazz="w-full"
+        padding="lg"
+      ></app-button>
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <p class="text-center text-gray-500 mt-6">
+    Thank you for supporting Paycheck to Paycheck! ❤️
+  </p>
+</div>

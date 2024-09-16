@@ -1,12 +1,11 @@
-import { CanMatchFn, Route, Router, UrlSegment } from '@angular/router';
+import { CanMatchFn, Route, Router } from '@angular/router';
 import { inject } from '@angular/core';
-import { Auth, user } from '@angular/fire/auth';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { getUser$ } from "../services/user.service";
 
-export const authGuard: CanMatchFn = (route: Route, segments: UrlSegment[]): Observable<boolean> => {
-  const auth = inject(Auth);
-  const user$ = user(auth);
+export const authGuard: CanMatchFn = (route: Route): Observable<boolean> => {
+  const user$ = getUser$();
   const router = inject(Router);
 
   const redirectUnauthorizedTo = route.data?.['redirectUnauthorizedTo'];

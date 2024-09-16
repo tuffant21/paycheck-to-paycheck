@@ -1,0 +1,15 @@
+<button
+  [class]="allClasses()"
+  [disabled]="disabled()"
+  [type]="type()"
+>
+  @if (icon() && positionIcon() === 'left') {
+    <span [ngClass]="{ 'mr-2': text() }"><app-icons [icon]="icon()"></app-icons></span>
+  }
+  @if (text()) {
+    {{text() | titlecase}}
+  }
+  @if (icon() && positionIcon() === 'right') {
+    <span [ngClass]="{ 'ml-2': text() }"><app-icons [icon]="icon()"></app-icons></span>
+  }
+</button>

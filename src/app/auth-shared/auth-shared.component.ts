@@ -1,15 +1,18 @@
 import { Component, inject, input, signal, WritableSignal } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
-import { Auth, GoogleAuthProvider, signInWithPopup, UserCredential } from "@angular/fire/auth";
 import { Router } from "@angular/router";
 import { NgClass } from "@angular/common";
+import { Auth, GoogleAuthProvider, signInWithPopup, UserCredential } from 'firebase/auth';
+import { FIREBASE_AUTH } from "../providers/firebase-auth.provider";
+import { ButtonComponent } from "../button/button.component";
 
 @Component({
   selector: 'app-auth-shared',
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    NgClass
+    NgClass,
+    ButtonComponent
   ],
   templateUrl: './auth-shared.component.html',
   styleUrl: './auth-shared.component.scss'
@@ -19,7 +22,7 @@ export class AuthSharedComponent {
   public buttonText = input.required<string>();
   public onSubmitAction = input.required<(auth: Auth, email: string, password: string) => Promise<UserCredential>>();
 
-  private auth: Auth = inject(Auth);
+  private auth: Auth = inject(FIREBASE_AUTH);
   private router: Router = inject(Router);
   private fb: FormBuilder = inject(FormBuilder);
   private StrongPasswordRegx: RegExp = /^(?=[^A-Z]*[A-Z])(?=[^a-z]*[a-z])(?=\D*\d).{8,}$/;

@@ -1,56 +1,108 @@
-import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
-import { ExpenseService } from "../repos/expense.service";
+import { Component, computed, inject, OnInit, Signal, signal, WritableSignal } from '@angular/core';
+import { ExpenseService } from "../services/expense.service";
 import { Router, RouterLink } from "@angular/router";
+import { DatePipe, NgClass } from "@angular/common";
 import { ExpenseModel } from "../models/expense-model";
-import { DatePipe } from "@angular/common";
+import { OrderByDirection, QueryDocumentSnapshot, QuerySnapshot, startAfter, startAt } from "firebase/firestore";
+import { ButtonComponent } from "../button/button.component";
 
 @Component({
   selector: 'app-documents',
   standalone: true,
   imports: [
     RouterLink,
-    DatePipe
+    DatePipe,
+    NgClass,
+    ButtonComponent
   ],
   templateUrl: './documents.component.html',
   styleUrl: './documents.component.scss'
 })
 export class DocumentsComponent implements OnInit {
-  // Reactive signals
-  page: WritableSignal<number> = signal(0); // Tracks the current page number
-  filter: WritableSignal<string> = signal('all'); // Tracks the selected filter
-  sortBy: WritableSignal<string> = signal('modified'); // Tracks the selected sort option
-  documents: WritableSignal<ExpenseModel[]> = signal([]); // Tracks the documents to display
-
   // Inject dependencies
   private router = inject(Router);
   private expenseService = inject(ExpenseService);
 
+  // Reactive signals
+  public filter: WritableSignal<'all' | 'owned' | 'shared'> = signal('all'); // Tracks the selected filter
+  public sortBy: WritableSignal<'created' | 'modified'> = signal('modified'); // Tracks the selected sort option
+  public sortDirection: WritableSignal<OrderByDirection> = signal('asc'); // Tracks the selected sort direction
+
+  // each time we get a new page, we need to track the first element for each previous page to reference later
+  // the first page should push undefined to the previous snapshot so it doesn't have a startAfter point
+  private previousSnapshotStart: WritableSignal<QueryDocumentSnapshot[]> = signal([]); // Tracks the previous documents
+  private currentSnapshot: WritableSignal<QuerySnapshot | undefined> = signal(undefined); // Tracks the documents to display
+  private nextSnapshot: WritableSignal<QuerySnapshot | undefined> = signal(undefined); // Tracks the next documents
+
+  public hasPrevious: Signal<boolean> = computed(() => {
+    return this.previousSnapshotStart().length > 0;
+  });
+  public hasNext: Signal<boolean> = computed(() => {
+    const currentSnapshot = this.currentSnapshot();
+    const nextSnapshot = this.nextSnapshot();
+
+    if (!currentSnapshot || currentSnapshot.size < 10) {
+      return false;
+    }
+
+    return nextSnapshot ? !nextSnapshot.empty : false;
+  });
+  public documents: Signal<ExpenseModel[]> = computed(() => {
+    // I don't think this is the best way to scroll to the top of the page, but it's the easiest way to do it and it works
+    window.scrollTo({top: 0, behavior: 'smooth'});
+
+    const snapshot = this.currentSnapshot();
+    return snapshot ? snapshot.docs.map(doc => doc.data() as ExpenseModel) : [];
+  });
+
   ngOnInit() {
-    this.getDocuments(); // Load the documents on initialization
+    this.resetSnapshots();
   }
 
-  nextPage(): void {
-    this.page.update(p => p + 1);
-    this.getDocuments(); // Refresh the documents
-  }
+  async nextPage(): Promise<void> {
+    const currentSnapshot = this.currentSnapshot();
+    const nextSnapshot = this.nextSnapshot();
 
-  previousPage(): void {
-    if (this.page() > 0) {
-      this.page.update(p => p - 1);
-      this.getDocuments(); // Refresh the documents
+    if (currentSnapshot && nextSnapshot) {
+      const previousStartAt = currentSnapshot.docs[0];
+      const startAfterLastDoc = nextSnapshot.docs[nextSnapshot.size - 1];
+
+      this.previousSnapshotStart.update((prev) => [...prev, previousStartAt]);
+      this.currentSnapshot.set(this.nextSnapshot());
+      this.nextSnapshot.set(undefined);
+
+      if (nextSnapshot.size === 10) {
+        const next = await this.expenseService.getDocuments(startAfter(startAfterLastDoc), this.filter(), this.sortBy(), this.sortDirection());
+        this.nextSnapshot.set(next);
+      }
     }
   }
 
-  applyFilter(filter: string): void {
-    this.filter.set(filter); // Set the new filter
-    this.page.set(0); // Reset to the first page when applying a new filter
-    this.getDocuments(); // Refresh the documents
+  async previousPage(): Promise<void> {
+    if (this.hasPrevious()) {
+      const previousRef = this.previousSnapshotStart()[this.previousSnapshotStart().length - 1];
+      this.nextSnapshot.set(this.currentSnapshot());
+      this.previousSnapshotStart.update((prev) => prev.slice(0, prev.length - 1));
+
+      const previous = await this.expenseService.getDocuments(startAt(previousRef), this.filter(), this.sortBy(), this.sortDirection());
+      this.currentSnapshot.set(previous);
+    }
   }
 
-  applySort(sortBy: string): void {
-    this.sortBy.set(sortBy); // Set the new sort option
-    this.page.set(0); // Reset to the first page when applying a new filter
-    this.getDocuments(); // Refresh the documents
+  applyFilter(filter: 'all' | 'owned' | 'shared'): void {
+    this.filter.set(filter); // Set the new filter
+    this.resetSnapshots();
+  }
+
+  applySort(sortBy: 'created' | 'modified'): void {
+    if (this.sortBy() === sortBy) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortDirection.set('asc');
+      this.sortBy.set(sortBy);
+    }
+
+    this.resetSnapshots();
   }
 
   async createDocument(): Promise<void> {
@@ -58,8 +110,18 @@ export class DocumentsComponent implements OnInit {
     this.router.navigate(['/expense-tracker', docId]);
   }
 
-  async getDocuments(): Promise<void> {
-    const docs = await this.expenseService.getDocuments(this.page(), this.filter(), this.sortBy());
-    this.documents.set(docs);
+  private async resetSnapshots(): Promise<void> {
+    this.previousSnapshotStart.set([]);
+    this.currentSnapshot.set(undefined);
+    this.nextSnapshot.set(undefined);
+
+    const currentSnapshot = await this.expenseService.getDocuments(null, this.filter(), this.sortBy(), this.sortDirection());
+    this.currentSnapshot.set(currentSnapshot);
+
+    if (currentSnapshot.size === 10) {
+      const startAfterLastDoc = currentSnapshot.docs[currentSnapshot.size - 1];
+      const nextSnapshot = await this.expenseService.getDocuments(startAfter(startAfterLastDoc), this.filter(), this.sortBy(), this.sortDirection());
+      this.nextSnapshot.set(nextSnapshot);
+    }
   }
 }

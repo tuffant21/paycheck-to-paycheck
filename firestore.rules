@@ -6,10 +6,13 @@ service cloud.firestore {
     match /expenses/{documentId} {
 
       // Create rules
-      allow create: if canCreate();
+      allow create: if canCreate(documentId);
 
       // Read rules
       allow read: if canRead(documentId);
+
+      // List rules
+      allow list: if canList();
 
       // Write rules
       allow update: if canUpdate(documentId);
@@ -28,86 +31,129 @@ service cloud.firestore {
 
       // Check if the user has a specific role in the ACL
       function userHasRole(role) {
-        return resource.data.acl[request.auth.uid] == role;
-      }
-
-      // Check if the public role has permission for a specific action
-      function publicHasRole(role) {
-        return resource.data.acl['public'] == role;
+        // Ensure that acl is valid and contains the editors and viewers arrays
+        return resource.data.acl is map &&
+            resource.data.acl.keys().hasAny(['editors', 'viewers']) &&
+            (
+              (role == 'editor' && resource.data.acl.editors.hasAny([request.auth.token.email])) ||
+                (role == 'viewer' && resource.data.acl.viewers.hasAny([request.auth.token.email]))
+            );
       }
 
       function containsOnlyFieldsInAllowList() {
-        return request.resource.data.keys().hasOnly(['created', 'modified', 'createdBy', 'headers', 'data', 'acl']);
+        return request.resource.data.keys().hasOnly([
+          'id', 'created', 'modified', 'createdBy', 'title', 'headers', 'data', 'acl'
+        ]);
       }
 
-      function canCreate() {
+      // Ensure that acl contains both editors and viewers as arrays
+      function isAclValid() {
+        return request.resource.data.acl is map &&
+            request.resource.data.acl.keys().hasAll(['editors', 'viewers']) &&
+            request.resource.data.acl.editors is list &&
+            request.resource.data.acl.viewers is list;
+      }
+
+      function canCreate(documentId) {
         // Check if the user has permission to write based on ACL
         return isAuthenticated() &&
-          containsOnlyFieldsInAllowList() &&
-          request.resource.data.keys().hasAll(['createdBy', 'created', 'modified', 'acl']) &&
-          request.resource.data.createdBy == request.auth.uid &&
-          request.resource.data.created is timestamp &&
-          request.resource.data.modified is timestamp &&
-          request.resource.data.acl is map;
+            containsOnlyFieldsInAllowList() &&
+            request.resource.data.keys().hasAll(['id', 'created', 'modified', 'createdBy', 'title', 'acl']) &&
+            request.resource.data.id == documentId &&
+            request.resource.data.created is timestamp &&
+            request.resource.data.modified is timestamp &&
+            request.resource.data.createdBy == request.auth.uid &&
+            request.resource.data.title is string &&
+            request.resource.data.headers is list &&
+            request.resource.data.data is list &&
+            isAclValid(); // Ensure acl has valid structure
       }
 
       function canRead(documentId) {
         // Check if the user has permission to read based on ACL
         return isAuthenticated() &&
-          exists(/databases/$(database)/documents/expenses/$(documentId)) &&
-          (
-            isOwner() ||
-            userHasRole('editor') ||
-            userHasRole('viewer') ||
-            publicHasRole('viewer') ||
-            publicHasRole('editor')
-          );
+            exists(/databases/$(database)/documents/expenses/$(documentId)) &&
+            (
+              isOwner() ||
+                userHasRole('editor') ||
+                userHasRole('viewer')
+            );
+      }
+
+      function canList() {
+        return isAuthenticated() &&
+            request.query.orderBy.keys().hasAny(['created', 'modified']) &&
+            (
+              request.query.orderBy['created'] == 'ASC' ||
+                request.query.orderBy['created'] == 'DESC' ||
+                request.query.orderBy['modified'] == 'ASC' ||
+                request.query.orderBy['modified'] == 'DESC'
+            ) &&
+            request.query.limit <= 10 && // Limit the number of documents returned
+            (
+              isOwner() ||
+                userHasRole('editor') ||
+                userHasRole('viewer')
+            );
       }
 
       function canUpdate(documentId) {
-        let isCreatedByValid = (
-          !('createdBy' in request.resource.data) || // If createdBy is not passed in, ignore the check
-          request.resource.data.createdBy == resource.data.createdBy // Ensure owner is not reassigned if createdBy is present
-        );
+        // Ensure id is not changed
+        let isIdValid = request.resource.data.id == documentId;
 
-        let isCreatedValid = (
-          !('created' in request.resource.data) || // If created is not passed in, ignore the check
-          request.resource.data.created == resource.data.created // Ensure created date is not changed if created is present
-        );
+        // Ensure created date is not changed if created is present
+        let isCreatedValid = request.resource.data.created == resource.data.created;
 
+        // Ensure modified date is updated
         let isModifiedValid = (
           request.resource.data.modified != resource.data.modified && // Ensure modified is updated
-          request.resource.data.modified != null && // Ensure modified is not null
-          request.resource.data.modified is timestamp // Ensure modified date is updated
+            request.resource.data.modified != null && // Ensure modified is not null
+            request.resource.data.modified is timestamp // Ensure modified date is a timestamp
         );
 
-        let isAclValid = (
-          !('acl' in request.resource.data) || // If acl is not passed in, ignore the check
-          request.resource.data.acl != null && // Ensure acl is not null
-          request.resource.data.acl is map // Ensure acl is a map
+        // Ensure owner is not reassigned if createdBy is present
+        let isCreatedByValid = request.resource.data.createdBy == resource.data.createdBy;
+
+        // Ensure title is a string
+        let isTitleValid = (
+          request.resource.data.title != null && // Ensure title is not null
+            request.resource.data.title is string // Ensure title is a string
+        );
+
+        let isHeadersValid = (
+          request.resource.data.headers != null && // Ensure headers is not null
+            request.resource.data.headers is list // Ensure headers is a list
+        );
+
+        let isDataValid = (
+          request.resource.data.data != null && // Ensure data is not null
+            request.resource.data.data is list // Ensure data is a list
         );
 
         // Check if the user has permission to write based on ACL
         return isAuthenticated() &&
-          exists(/databases/$(database)/documents/expenses/$(documentId)) &&
-          (
-            isOwner() ||
-            userHasRole('editor') ||
-            publicHasRole('editor')
-          ) &&
-          containsOnlyFieldsInAllowList() &&
+            exists(/databases/$(database)/documents/expenses/$(documentId)) &&
+            (
+              isOwner() ||
+                userHasRole('editor')
+            ) &&
+            containsOnlyFieldsInAllowList() &&
           // Ensure the owner field in acl and created field cannot be changed
-          isCreatedByValid && // Owner cannot be reassigned
-          isCreatedValid && // Created cannot be changed
-          isModifiedValid && // Modified must be a timestamp
-          isAclValid; // ACL must be a map
+            isIdValid && // ID cannot be changed
+            isCreatedValid && // Created cannot be changed
+            isModifiedValid && // Modified must be a timestamp
+            isCreatedByValid && // Owner cannot be reassigned
+            isTitleValid && // Title must be a string
+            isHeadersValid && // Headers must be a list
+            isDataValid && // Data must be a list
+            isAclValid(); // ACL must have editors and viewers arrays
       }
 
       function canDelete(documentId) {
         // Check if the user has permission to write based on ACL
         return isAuthenticated() &&
-          exists(/databases/$(database)/documents/expenses/$(documentId)) &&
-          isOwner();
+            exists(/databases/$(database)/documents/expenses/$(documentId)) &&
+            isOwner();
       }
     }
   }

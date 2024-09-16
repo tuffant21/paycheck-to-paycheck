@@ -1,0 +1,19 @@
+<div class="relative">
+  <app-button
+    color="gray"
+    clazz="flex items-center"
+    icon="dropdown"
+    [text]="label()"
+    (click)="toggleDropdown()"
+  ></app-button>
+
+  @if (isOpen()) {
+    <div class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded shadow-lg z-10">
+      @for (action of actions(); track action) {
+        <button class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100" (click)="selectAction(action.id)">
+          {{ action.label | titlecase }}
+        </button>
+      }
+    </div>
+  }
+</div>

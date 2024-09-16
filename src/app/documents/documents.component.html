@@ -1,44 +1,115 @@
-<div class="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-gray-800">Your Documents</h2>
-    <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" (click)="createDocument()">
-      Create New Document
-    </button>
+<div class="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded">
+  <!-- Heading and Create Button -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Your Documents</h2>
+    <app-button
+      color="blue"
+      class="w-full md:w-auto"
+      clazz="w-full md:w-auto"
+      text="Create New Document"
+      (click)="createDocument()"
+    ></app-button>
   </div>
 
-  <!-- Filters -->
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <button class="text-sm px-4 py-2 mr-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applyFilter('all')">All Documents</button>
-      <button class="text-sm px-4 py-2 mr-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applyFilter('owned')">Owned by Me</button>
-      <button class="text-sm px-4 py-2 mr-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applyFilter('shared')">Shared with Me</button>
+  <!-- Filters and Sort Options -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+
+    <!-- Filter Options -->
+    <div class="w-full sm:w-auto mb-4 sm:mb-0">
+      <p class="text-sm font-semibold text-gray-600 mb-2">Filter Options:</p>
+      <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+        <app-button
+          [color]="filter() === 'all' ? 'blue' : 'gray'"
+          class=""
+          clazz="text-sm w-full"
+          text="All Documents"
+          (click)="applyFilter('all')"
+        ></app-button>
+        <app-button
+          [color]="filter() === 'owned' ? 'blue' : 'gray'"
+          clazz="text-sm w-full"
+          text="Owned by Me"
+          (click)="applyFilter('owned')"
+        ></app-button>
+        <app-button
+          [color]="filter() === 'shared' ? 'blue' : 'gray'"
+          clazz="text-sm w-full"
+          text="Shared with Me"
+          (click)="applyFilter('shared')"
+        ></app-button>
+      </div>
     </div>
-    <div>
-      <button class="text-sm px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applySort('created')">Created</button>
-      <button class="text-sm px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded" (click)="applySort('modified')">Last Modified</button>
+
+    <!-- Sort Options -->
+    <div class="w-full sm:w-auto">
+      <p class="text-sm font-semibold text-gray-600 mb-2">Sort Options:</p>
+      <div class="flex flex-col sm:flex-row w-full sm:w-auto">
+        <app-button
+          [color]="sortBy() === 'created' ? 'blue' : 'gray'"
+          [icon]="sortBy() === 'created' ? sortDirection() === 'asc' ? 'arrow-up' : 'arrow-down' : ''"
+          clazz="text-sm w-full"
+          text="Created"
+          (click)="applySort('created')"
+        ></app-button>
+        <app-button
+          [color]="sortBy() === 'modified' ? 'blue' : 'gray'"
+          [icon]="sortBy() === 'modified' ? sortDirection() === 'asc' ? 'arrow-up' : 'arrow-down' : ''"
+          clazz="text-sm w-full md:mt-0 md:ml-2 mt-2"
+          text="Last Modified"
+          (click)="applySort('modified')"
+        ></app-button>
+      </div>
     </div>
+
   </div>
 
   <!-- Document List -->
-  @for (doc of documents(); track doc.id) {
-    <ul class="divide-y divide-gray-200">
-      <li class="py-4">
-        <a [routerLink]="['/expense-tracker', doc.id]" class="text-blue-500 hover:underline">
-          Document ID: {{ doc.id }} | Created: {{ doc.created | date }} | Modified: {{ doc.modified | date }}
-        </a>
-      </li>
-    </ul>
-  } @empty {
-    <p class="text-center text-gray-600">No documents found.</p>
-  }
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+      <thead class="bg-gray-50">
+      <tr>
+        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Document Title</th>
+        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Created</th>
+        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Modified</th>
+      </tr>
+      </thead>
+      <tbody>
+        @for (doc of documents(); track doc.id) {
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2 border-t border-gray-200">
+              <a [routerLink]="['/expense-tracker', doc.id]" class="text-blue-500 hover:underline">
+                {{ doc.title }}
+              </a>
+            </td>
+            <td class="px-4 py-2 border-t border-gray-200 text-sm text-gray-500">{{ doc.created.toDate() | date }}</td>
+            <td class="px-4 py-2 border-t border-gray-200 text-sm text-gray-500">{{ doc.modified.toDate() | date }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="text-center text-gray-600 py-4">No documents found.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
 
   <!-- Pagination Controls -->
-  <div class="flex justify-between items-center mt-6">
-    <button class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" (click)="previousPage()" [disabled]="page() === 0">
-      Previous
-    </button>
-    <button class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400" (click)="nextPage()">
-      Next
-    </button>
+  <div class="flex flex-col sm:flex-row justify-between items-center mt-6">
+    <app-button
+      color="blue"
+      class="w-full md:w-auto"
+      clazz="w-full md:w-auto mb-4 md:mb-0"
+      text="Previous"
+      (click)="previousPage()"
+      [disabled]="!hasPrevious()"
+    ></app-button>
+    <app-button
+      color="blue"
+      class="w-full md:w-auto"
+      clazz="w-full md:w-auto"
+      text="Next"
+      (click)="nextPage()"
+      [disabled]="!hasNext()"
+    ></app-button>
   </div>
 </div>

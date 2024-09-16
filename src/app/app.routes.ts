@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from "./home/home.component";
 import { authGuard } from "./guards/auth.guard";
-import { documentExistsGuard } from "./guards/document-exists.guard";
+import { expenseTrackerGuard } from "./guards/expense-tracker.guard";
 
 export const routes: Routes = [
   {
@@ -29,7 +29,7 @@ export const routes: Routes = [
   {
     path: 'expense-tracker/:id',
     loadComponent: () => import('./expense-tracker/expense-tracker.component').then(m => m.ExpenseTrackerComponent),
-    canMatch: [authGuard, documentExistsGuard],
+    canMatch: [authGuard, expenseTrackerGuard],
     data: { redirectUnauthorizedTo: '/sign-in', redirectNotFoundTo: '/documents' }
   },
   {
@@ -43,6 +43,10 @@ export const routes: Routes = [
   {
     path: 'about',
     loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
+  },
+  {
+    path: 'donate',
+    loadComponent: () => import('./donate/donate.component').then(m => m.DonateComponent)
   },
   {
     path: '**',

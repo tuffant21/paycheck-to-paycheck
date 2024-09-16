@@ -4,8 +4,22 @@
     <h1 class="text-4xl md:text-5xl font-bold">Easily Manage Your Bills with Paycheck to Paycheck</h1>
     <p class="mt-4 text-lg md:text-xl">Track, organize, and manage your bills all in one place. Stay on top of your finances without the stress.</p>
     <div class="mt-8 flex justify-center space-x-4">
-      <a href="/sign-up" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg">Get Started</a>
-      <a href="/about" class="text-white underline hover:text-gray-200 py-3 px-6 rounded-lg">Learn More</a>
+      <a [routerLink]="user() ? '/documents' : '/sign-up'">
+        <app-button
+          text="Get Started"
+          color="green"
+          padding="lg"
+          clazz="font-semibold"
+        >Get Started</app-button>
+      </a>
+      <a routerLink="/about">
+        <app-button
+          text="Learn More"
+          color="transparent"
+          padding="lg"
+          clazz="underline text-white hover:text-gray-300"
+        ></app-button>
+      </a>
     </div>
   </div>
 </section>
@@ -16,15 +30,15 @@
     <h2 class="text-3xl font-bold text-gray-800">Why Use Paycheck to Paycheck?</h2>
     <p class="mt-4 text-lg text-gray-600">Take control of your finances with these simple and powerful features.</p>
     <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div class="bg-white p-6 shadow-lg rounded-lg">
+      <div class="bg-white p-6 shadow-lg rounded">
         <h3 class="text-2xl font-semibold text-blue-600">Track Your Bills</h3>
         <p class="mt-4 text-gray-600">Keep track of when your bills are due and how much you owe, all in one place.</p>
       </div>
-      <div class="bg-white p-6 shadow-lg rounded-lg">
+      <div class="bg-white p-6 shadow-lg rounded">
         <h3 class="text-2xl font-semibold text-blue-600">Share Bills</h3>
         <p class="mt-4 text-gray-600">Easily share your bill management with others, so everyone stays in sync.</p>
       </div>
-      <div class="bg-white p-6 shadow-lg rounded-lg">
+      <div class="bg-white p-6 shadow-lg rounded">
         <h3 class="text-2xl font-semibold text-blue-600">Completely Free</h3>
         <p class="mt-4 text-gray-600">This service is open-source and free for everyone. Start managing your bills today at no cost.</p>
       </div>
@@ -38,7 +52,14 @@
     <h2 class="text-3xl md:text-4xl font-bold">Ready to Take Control of Your Bills?</h2>
     <p class="mt-4 text-lg md:text-xl">Sign up now and start managing your finances with ease.</p>
     <div class="mt-8">
-      <a href="/sign-up" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg">Get Started Now</a>
+      <a [routerLink]="user() ? '/documents' : '/sign-up'">
+        <app-button
+          text="Get Started Now"
+          color="green"
+          padding="lg"
+          clazz="font-semibold"
+        ></app-button>
+      </a>
     </div>
   </div>
 </section>

@@ -1,40 +1,68 @@
 <header class="bg-gray-800 text-white p-4 flex justify-between items-center">
   <!-- Logo -->
-  <button (click)="navigateTo('/')" class="text-xl font-bold hover:text-gray-400">Paycheck to Paycheck</button>
+  <app-button
+    text="Paycheck to Paycheck"
+    color="transparent"
+    clazz="text-xl font-bold hover:text-gray-400"
+    [padding]="''"
+    (click)="navigateTo('/')"
+  ></app-button>
 
   <!-- Hamburger Icon for Mobile -->
-  <button id="menuToggle" class="block md:hidden text-white focus:outline-none" (click)="toggleMenu()">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-    </svg>
-  </button>
+  <app-button
+    color="transparent"
+    class="block md:hidden"
+    clazz="text-white hover:text-gray-300"
+    icon="hamburger"
+    (click)="toggleMenu()"
+  ></app-button>
 
   <!-- Links & Buttons -->
   <div
-    id="navMenu"
     [ngClass]="{ hidden: menuClosed() }"
-    class="md:flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 items-center absolute md:relative left-0 right-0 top-14 md:top-auto bg-gray-800 md:bg-transparent p-4 md:p-0 z-10 w-full md:w-auto transition-all duration-300 ease-out overflow-hidden"
+    class="md:flex flex-col md:flex-row md:space-x-4 items-center absolute md:relative left-0 right-0 top-14 md:top-auto bg-gray-800 md:bg-transparent p-4 md:p-0 z-10 w-full md:w-auto transition-all duration-300 ease-out overflow-hidden"
   >
-    <button class="block w-full text-center hover:text-gray-400" (click)="navigateTo('/documents')">Documents</button>
-    <button class="block w-full text-center hover:text-gray-400" (click)="navigateTo('/about')">About</button>
-    @if (userSignal()) {
-      <button class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded block w-full text-center whitespace-nowrap"
-              (click)="signOut()">
-        Sign Out
-      </button>
+    <app-button
+      text="Documents"
+      color="transparent"
+      clazz="block w-full text-center hover:text-gray-400"
+      [padding]="''"
+      (click)="navigateTo('/documents')"
+    ></app-button>
+    <app-button
+      text="About"
+      color="transparent"
+      clazz="mt-4 md:mt-0 block w-full text-center hover:text-gray-400"
+      [padding]="''"
+      (click)="navigateTo('/about')"
+    ></app-button>
+    <app-button
+      text="Donate"
+      color="transparent"
+      clazz="mt-4 md:mt-0 block w-full text-center hover:text-gray-400"
+      [padding]="''"
+      (click)="navigateTo('/donate')"
+    ></app-button>
+    @if (user()) {
+      <app-button
+        text="Sign Out"
+        color="red"
+        clazz="mt-4 md:mt-0 block w-full font-semibold text-center whitespace-nowrap"
+        (click)="signOut()"
+      ></app-button>
     } @else {
-      <button
+      <app-button
+        text="Sign In"
+        color="blue"
+        clazz="mt-4 md:mt-0 block w-full font-semibold text-center whitespace-nowrap"
         (click)="navigateTo('/sign-in')"
-        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded block w-full text-center whitespace-nowrap"
-      >
-        Sign In
-      </button>
-      <button
+      ></app-button>
+      <app-button
+        text="Sign Up"
+        color="green"
+        clazz="mt-4 md:mt-0 block w-full font-semibold text-center whitespace-nowrap"
         (click)="navigateTo('/sign-up')"
-        class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded block w-full text-center whitespace-nowrap"
-      >
-        Sign Up
-      </button>
+      ></app-button>
     }
   </div>
 </header>

@@ -1,0 +1,35 @@
+@if (visible()) {
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" title="">
+    <div class="bg-white rounded shadow-lg p-6 max-w-lg w-full">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xl font-bold">{{ title() }}</h3>
+        <app-button
+          color="transparent"
+          clazz="text-gray-500 hover:text-gray-700"
+          icon="close"
+          [padding]="''"
+          (click)="closeAction.emit()"
+        ></app-button>
+      </div>
+      <div class="mt-4">
+        <ng-content></ng-content>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <app-button
+          [color]="confirmText() ? 'gray' : 'blue'"
+          [text]="closeText()"
+          (click)="closeAction.emit()"
+        ></app-button>
+
+        @if (confirmText()) {
+          <app-button
+            color="blue"
+            class="ml-4"
+            [text]="confirmText()"
+            (click)="confirmAction.emit()"
+          ></app-button>
+        }
+      </div>
+    </div>
+  </div>
+}

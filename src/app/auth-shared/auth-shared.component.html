@@ -1,5 +1,5 @@
 <div class="px-4">
-  <div class="max-w-lg mx-auto mt-10 p-8 bg-white shadow-lg rounded-lg">
+  <div class="max-w-lg mx-auto mt-10 p-8 bg-white shadow-lg rounded">
     <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">{{ title() }}</h2>
 
     <!-- Sign Up / In Form -->
@@ -15,7 +15,7 @@
           name="email"
           (keyup)="updateEmailError()"
           (change)="updateEmailError()"
-          class="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          class="mt-2 block w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         >
         @if (emailError()) {
           <span class="mt-2 text-center text-red-600 text-sm">{{ emailError() }}</span>
@@ -32,7 +32,7 @@
           name="password"
           (keyup)="updatePasswordError()"
           (change)="updatePasswordError()"
-          class="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          class="mt-2 block w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         >
         @if (passwordError()) {
           <span class="mt-2 text-center text-red-600 text-sm">{{ passwordError() }}</span>
@@ -40,15 +40,15 @@
       </div>
 
       <!-- Submit Button -->
-      <button
-        type="submit"
-        [ngClass]="{ 'shadow-sm bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500': fg.valid, 'bg-gray-600': fg.invalid }"
-        class="w-full flex justify-center py-3 px-4 text-lg font-semibold border border-transparent rounded-md text-white"
+      <app-button
+        color="blue"
+        class="flex justify-center"
+        clazz="w-full text-lg font-semibold"
         [disabled]="fg.invalid"
-      >
-        {{ buttonText() }}
-      </button>
-
+        padding="lg"
+        [text]="buttonText()"
+        [type]="'submit'"
+      ></app-button>
     </form>
 
     <!-- Separator -->
@@ -59,12 +59,14 @@
     </div>
 
     <!-- Sign Up with Google -->
-    <button
+    <app-button
+      color="red"
+      class="flex justify-center mt-6"
+      clazz="w-full text-lg font-semibold"
+      padding="lg"
+      [text]="buttonText() + ' with Google'"
       (click)="signInWithGoogle()"
-      class="w-full mt-6 flex justify-center py-3 px-4 text-lg font-semibold border border-transparent rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-    >
-      {{ buttonText() }} with Google
-    </button>
+    ></app-button>
 
     <!-- Error Message -->
     @if (errorMessage()) {

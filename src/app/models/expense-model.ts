@@ -1,19 +1,20 @@
-export type PUBLIC_KEY = 'public';
+import { Timestamp } from "firebase/firestore";
+
 export type HeaderType = 'text' | 'boolean' | 'currency' | 'date';
 
-export type ExpenseModel = {
+export type ExpenseModel<DATE_TYPE = Timestamp> = {
   id: string;
-  created: string;
-  modified: string;
+  created: DATE_TYPE;
+  modified: DATE_TYPE;
   createdBy: string;
-  headers?: [
-    { key: string, type: HeaderType , display: string }
-  ];
-  data?: {
+  title: string;
+  headers: { key?: string, type?: HeaderType, display?: string }[];
+  data: {
     [key: string]: any;
+    __disabled?: boolean;
   }[];
   acl: {
-    // 'user': 'role'
-    [key: string | PUBLIC_KEY]: string;
+    editors: string[];
+    viewers: string[];
   };
 }
