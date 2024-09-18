@@ -62,11 +62,16 @@ export class ButtonComponent {
     }
   });
 
+  animateSpinClass = computed(() => {
+    return this.animateSpin() ? 'inline-flex items-center' : '';
+  });
+
   allClasses = computed(() => {
-    const always = 'rounded transition-colors duration-300 ease-in-out whitespace-nowrap inline-flex items-center';
+    const always = 'rounded transition-colors duration-300 ease-in-out whitespace-nowrap';
 
     const classes = [
       always,
+      this.animateSpinClass(),
       this.clazz(),
       this.colorClass(),
       this.cursorClass(),

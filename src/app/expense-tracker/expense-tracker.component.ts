@@ -75,9 +75,9 @@ export class ExpenseTrackerComponent {
 
   // Manage Document Dropdown
   getManageDocumentActions() {
-    return this.isEditor()
-      ? [{ id: 'share', label: 'Share Document' }]
-      : [{ id: 'share', label: 'Share Document' }, { id: 'delete', label: 'Delete Document' }];
+    return this.isOwner()
+      ? [{ id: 'share', label: 'Share Document' }, { id: 'delete', label: 'Delete Document' }]
+      : [{ id: 'share', label: 'Share Document' }];
   }
 
   handleManageDocumentActions(eventId: string) {
@@ -204,6 +204,14 @@ export class ExpenseTrackerComponent {
   async deleteDocument() {
   }
 
+  confirmAction() {
+    const document = this.document();
+    if (this.actionBill && document) {
+      document.data = document.data?.filter((b) => b !== this.actionBill);
+      this.actionBill = null;
+    }
+  }
+
   // share document modal
   showShareModal: WritableSignal<boolean> = signal(false);
   pendingRemoveAccess: WritableSignal<{ role: string, email: string } | null> = signal(null);
@@ -273,30 +281,18 @@ export class ExpenseTrackerComponent {
     }
   }
 
-  confirmAction() {
+  async handleUpdateAcl(eventId: string, acl: { role: string, email: string }) {
     const document = this.document();
-    if (this.actionBill && document) {
-      document.data = document.data?.filter((b) => b !== this.actionBill);
-      this.actionBill = null;
-    }
-  }
+    if (!document) return;
 
-  handleUpdateAcl(eventId: string, acl: { role: string, email: string }) {
-    // const docRef = doc(this.firestore, `expenses/${this.expenseId}`);
-    // if ($event.role === 'editor') {
-    //   updateDoc(docRef, {
-    //     'acl.editors': arrayUnion($event.email),
-    //     'acl.viewers': arrayRemove($event.email),
-    //   });
-    // } else {
-    //   updateDoc(docRef, {
-    //     'acl.viewers': arrayUnion($event.email),
-    //     'acl.editors': arrayRemove($event.email),
-    //   });
-    // }
     if (eventId === 'remove') {
       this.pendingRemoveAccess.set(acl);
       this.showConfirmRemoveAccessModal.set(true);
+    } else if (eventId === 'viewer') {
+      const resp = await this.expenseService.addToAcl(document, 'viewers', acl.email);
+      console.log(resp);
+    } else if (eventId === 'editor') {
+      const resp = await this.expenseService.addToAcl(document, 'editors', acl.email);
     }
   }
 

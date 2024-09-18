@@ -129,7 +129,7 @@ export class ExpenseService {
       return { success: true };
     }
 
-    // if in editors and new role is viewer, remove user from editors
+    // if in viewers and new role is editors, remove user from viewers
     if (aclKey === 'editors' && document.acl.viewers.includes(email)) {
       update = {
         acl: {
@@ -138,12 +138,12 @@ export class ExpenseService {
         }
       }
     } 
-    // if in viewers and new role is editor, remove user from viewers
+    // if in editors and new role is viewers, remove user from editors
     else if (aclKey === 'viewers' && document.acl.editors.includes(email)) {
       update = {
         acl: {
-          editors: arrayUnion(email),
-          viewers: arrayRemove(email)
+          editors: arrayRemove(email),
+          viewers: arrayUnion(email)
         }
       }
     }
