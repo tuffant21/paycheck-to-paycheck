@@ -41,7 +41,8 @@ export class ExpenseTrackerComponent {
 
     return [...editors, ...viewers];
   });
-
+  
+  // permissions
   isOwner: Signal<boolean> = computed(() => {
     const user = this.user();
     const document = this.document();
@@ -52,7 +53,6 @@ export class ExpenseTrackerComponent {
     return user.uid === document.createdBy
   });
 
-  // permissions
   isEditor: Signal<boolean> = computed(() => {
     const user = this.user();
     const document = this.document();

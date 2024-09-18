@@ -32,8 +32,8 @@ export const expenseTrackerGuard: CanMatchFn = (route: Route, segments: UrlSegme
       const data = docSnap.data() as ExpenseModel;
 
       const isOwner = data.createdBy === user.uid;
-      const isEditor = data.acl.editors.includes(user.email ?? '');
-      const isViewer = data.acl.viewers.includes(user.email ?? '');
+      const isEditor = !user.email ? false : data.acl.editors.includes(user.email);
+      const isViewer = !user.email ? false : data.acl.viewers.includes(user.email);
 
       if (!isOwner && !isEditor && !isViewer) {
         router.navigate([redirectUrl]); // Redirect if no document ID is provided
