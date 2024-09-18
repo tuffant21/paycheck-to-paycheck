@@ -179,7 +179,7 @@
                   { id: 'viewer', label: 'Viewer' },
                   { id: 'editor', label: 'Editor' },
                   { id: 'remove', label: 'Remove Access' }
-                ]" (dropdownItemClicked)="handleUpdateAcl(acl, $event)"></app-dropdown>
+                ]" (dropdownItemClicked)="handleUpdateAcl($event, acl)"></app-dropdown>
         </div>
       </li>
       } @empty {

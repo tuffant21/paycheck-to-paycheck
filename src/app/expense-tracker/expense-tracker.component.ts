@@ -281,7 +281,7 @@ export class ExpenseTrackerComponent {
     }
   }
 
-  handleUpdateAcl(acl: { role: string, email: string }, eventId: string ) {
+  handleUpdateAcl(eventId: string, acl: { role: string, email: string }) {
     // const docRef = doc(this.firestore, `expenses/${this.expenseId}`);
     // if ($event.role === 'editor') {
     //   updateDoc(docRef, {

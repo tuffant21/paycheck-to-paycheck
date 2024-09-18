@@ -124,6 +124,11 @@ export class ExpenseService {
     const docRef = doc(expenseCollectionRef, document.id);
     let update;
 
+    // do nothing if user is already in acl
+    if (document.acl[aclKey].includes(email)) {
+      return { success: true };
+    }
+
     // if in editors and new role is viewer, remove user from editors
     if (aclKey === 'editors' && document.acl.viewers.includes(email)) {
       update = {
