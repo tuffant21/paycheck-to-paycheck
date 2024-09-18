@@ -16,6 +16,7 @@ import { IconsComponent } from "./icons/icons.component";
   styleUrl: './button.component.scss'
 })
 export class ButtonComponent {
+  animateSpin = input<boolean>(false);
   clazz = input<string>();
   color = input.required<'blue' | 'green' | 'red' | 'gray' | 'transparent'>();
   disabled = input<boolean>(false);
@@ -62,7 +63,7 @@ export class ButtonComponent {
   });
 
   allClasses = computed(() => {
-    const always = 'rounded transition-colors duration-300 ease-in-out';
+    const always = 'rounded transition-colors duration-300 ease-in-out whitespace-nowrap inline-flex items-center';
 
     const classes = [
       always,

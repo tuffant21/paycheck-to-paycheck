@@ -2,8 +2,11 @@ import { inject, Injectable } from '@angular/core';
 import { ExpenseModel } from "../models/expense-model";
 import { Observable } from "rxjs";
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   doc,
+  FieldValue,
   getDocs,
   limit,
   onSnapshot,
@@ -114,5 +117,69 @@ export class ExpenseService {
       query(expenseCollectionRef, whereFilter, orderBy(sortBy, direction), limit(10));
 
     return getDocs(q);
+  }
+
+  async addToAcl(document: ExpenseModel, aclKey: 'editors' | 'viewers', email: string): Promise<{ success: boolean, error?: string }> {
+    const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
+    const docRef = doc(expenseCollectionRef, document.id);
+    let update;
+
+    // if in editors and new role is viewer, remove user from editors
+    if (aclKey === 'editors' && document.acl.viewers.includes(email)) {
+      update = {
+        acl: {
+          editors: arrayUnion(email),
+          viewers: arrayRemove(email)
+        }
+      }
+    } 
+    // if in viewers and new role is editor, remove user from viewers
+    else if (aclKey === 'viewers' && document.acl.editors.includes(email)) {
+      update = {
+        acl: {
+          editors: arrayUnion(email),
+          viewers: arrayRemove(email)
+        }
+      }
+    }
+    // otherwise add to acl
+    else {
+      update = {
+        acl: {
+          [aclKey]: arrayUnion(email)
+        }
+      }
+    }
+
+    try {
+      await setDoc(docRef, {
+        ...update,
+        modified: new Date()
+      }, {merge: true});
+
+      return { success: true };
+    } catch (err) {
+      console.warn(err);
+      return { success: false, error: 'Apologies! There was an error updating your document. Please try again later.' }
+    }
+  }
+
+  async removeFromAcl(document: ExpenseModel, aclKey: 'editors' | 'viewers', email: string): Promise<{ success: boolean, error?: string }> {
+    const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
+    const docRef = doc(expenseCollectionRef, document.id);
+
+    try {
+      await setDoc(docRef, {
+        acl: {
+          [aclKey]: arrayRemove(email)
+        },
+        modified: new Date()
+      }, {merge: true});
+
+      return { success: true };
+    } catch (err) {
+      console.warn(err);
+      return { success: false, error: 'Apologies! There was an error updating your document. Please try again later.' }
+    }
   }
 }

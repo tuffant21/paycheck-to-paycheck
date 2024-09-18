@@ -73,18 +73,24 @@ export class ExpenseTrackerComponent {
     return document.acl.viewers.includes(user.email);
   });
 
-  // modals
-  showDeleteDocumentModal: WritableSignal<boolean> = signal(false);
-  showShareModal: WritableSignal<boolean> = signal(false);
-  pendingRemoveAccess: WritableSignal<{ role: string, email: string } | null> = signal(null);
-  showConfirmRemoveAccessModal: WritableSignal<boolean> = signal(false);
-  shareEmail = new FormControl('', [ Validators.required, Validators.email ]);
-  emailError: WritableSignal<string> = signal('');
+  // Manage Document Dropdown
+  getManageDocumentActions() {
+    return this.isEditor()
+      ? [{ id: 'share', label: 'Share Document' }]
+      : [{ id: 'share', label: 'Share Document' }, { id: 'delete', label: 'Delete Document' }];
+  }
+
+  handleManageDocumentActions(eventId: string) {
+    if (this.isOwner() && eventId === 'delete') {
+      this.openDeleteDocumentModal();
+    } else if (this.isOwner() || this.isEditor() && eventId === 'share') {
+      this.openShareModal();
+    }
+  }
 
   // state
   sortBy: string | null = null;
   sortDirection: 'asc' | 'desc' | null = null;
-  newUserRole: string = 'viewer';
   editingCell: { [bill: string]: { [header: string]: boolean } } = {};
   actionBill: any;
 
@@ -95,24 +101,6 @@ export class ExpenseTrackerComponent {
     //     this.editingCell[bill][header.key] = false;
     //   });
     // });
-  }
-
-  getManageDocumentActions() {
-    return this.isViewer()
-      ? []
-      : this.isEditor()
-      ? [{ id: 'share', label: 'Share Document' }]
-      : [{ id: 'share', label: 'Share Document' }, { id: 'delete', label: 'Delete Document' }];
-  }
-
-  updateEmailError() {
-    this.emailError.set('');
-
-    if (this.shareEmail.hasError('required')) {
-      this.emailError.set('* Email is required');
-    } else if (this.shareEmail.hasError('email')) {
-      this.emailError.set('Email is invalid');
-    }
   }
 
   // Enable editing of the clicked cell
@@ -196,15 +184,44 @@ export class ExpenseTrackerComponent {
     bill.disabled = false;
   }
 
-  // Open the delete document modal
+  // Confirm delete action for bills
+  confirmDeleteBill(bill: any) {
+    this.actionBill = bill;
+  }
+
+  // delete document modal
+  showDeleteDocumentModal: WritableSignal<boolean> = signal(false);
+
   openDeleteDocumentModal() {
     this.showDeleteDocumentModal.set(true);
   }
 
-  // Close the delete document modal
   closeDeleteDocumentModal() {
     this.showDeleteDocumentModal.set(false);
   }
+
+  // Delete document
+  async deleteDocument() {
+  }
+
+  // share document modal
+  showShareModal: WritableSignal<boolean> = signal(false);
+  pendingRemoveAccess: WritableSignal<{ role: string, email: string } | null> = signal(null);
+  showConfirmRemoveAccessModal: WritableSignal<boolean> = signal(false);
+  shareEmail = new FormControl('', [ Validators.required, Validators.email ]);
+  newUserRole: WritableSignal<'viewer' | 'editor' | null> = signal(null);
+  private newUserRoleToAclKey = computed(() => {
+    const role = this.newUserRole();
+    if (role === 'viewer') {
+      return 'viewers';
+    } else if (role === 'editor') {
+      return 'editors';
+    }
+
+    return null;
+  });
+  emailError: WritableSignal<string> = signal('');
+  sendingShareRequest: WritableSignal<boolean> = signal(false);
 
   // Open the share document modal
   openShareModal() {
@@ -216,29 +233,44 @@ export class ExpenseTrackerComponent {
     this.showShareModal.set(false);
   }
 
+  updateEmailError() {
+    this.emailError.set('');
+
+    if (this.shareEmail.hasError('required')) {
+      this.emailError.set('* Email is required');
+    } else if (this.shareEmail.hasError('email')) {
+      this.emailError.set('Email is invalid');
+    }
+  }
+
+  updateUserRole(event: string) {
+    if (event === 'viewer') {
+      this.newUserRole.set('viewer');
+    } else if (event === 'editor') {
+      this.newUserRole.set('editor');
+    }
+  }
+
   // Share or manage document access
   async shareDocument() {
-    // if (!this.shareEmail || !this.expenseId) return;
+    const document = this.document();
+    const role = this.newUserRoleToAclKey();
+    const email = this.shareEmail.value;
 
-    // const docRef = doc(this.firestore, `expenses/${this.expenseId}`);
-    // if (this.newUserRole === 'editor') {
-    //   await updateDoc(docRef, {
-    //     'acl.editors': arrayUnion(this.shareEmail),
-    //   });
-    // } else {
-    //   await updateDoc(docRef, {
-    //     'acl.viewers': arrayUnion(this.shareEmail),
-    //   });
-    // }
-  }
+    if (this.shareEmail.invalid || !document || !role || !email) {
+      return;
+    }
 
-  // Delete document
-  async deleteDocument() {
-  }
+    this.sendingShareRequest.set(true);
+    const resp = await this.expenseService.addToAcl(document, role, email);
+    this.sendingShareRequest.set(false);
 
-  // Confirm delete action for bills
-  confirmDelete(bill: any) {
-    this.actionBill = bill;
+    if (resp.success) {
+      this.newUserRole.set(null);
+      this.shareEmail.reset();
+    } else {
+      window.alert(resp.error);
+    }
   }
 
   confirmAction() {
@@ -249,15 +281,7 @@ export class ExpenseTrackerComponent {
     }
   }
 
-  handleManageDocumentActions($event: string) {
-    if ($event === 'delete') {
-      this.openDeleteDocumentModal();
-    } else if ($event === 'share') {
-      this.openShareModal();
-    }
-  }
-
-  handleUpdateAcl(acl: { role: string, email: string }, newRole: string ) {
+  handleUpdateAcl(acl: { role: string, email: string }, eventId: string ) {
     // const docRef = doc(this.firestore, `expenses/${this.expenseId}`);
     // if ($event.role === 'editor') {
     //   updateDoc(docRef, {
@@ -270,7 +294,7 @@ export class ExpenseTrackerComponent {
     //     'acl.editors': arrayRemove($event.email),
     //   });
     // }
-    if (newRole === 'remove') {
+    if (eventId === 'remove') {
       this.pendingRemoveAccess.set(acl);
       this.showConfirmRemoveAccessModal.set(true);
     }

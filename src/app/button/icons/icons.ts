@@ -1,1 +1,1 @@
-export type ButtonIcon = '' | 'arrow-up' | 'arrow-down' | 'close' | 'dropdown' | 'hamburger';
+export type ButtonIcon = '' | 'animate-spin' | 'arrow-up' | 'arrow-down' | 'close' | 'dropdown' | 'hamburger';

@@ -3,6 +3,9 @@
   [disabled]="disabled()"
   [type]="type()"
 >
+  @if (animateSpin()) {
+    <app-icons icon="animate-spin"></app-icons>
+  }
   @if (icon() && positionIcon() === 'left') {
     <span [ngClass]="{ 'mr-2': text() }"><app-icons [icon]="icon()"></app-icons></span>
   }
