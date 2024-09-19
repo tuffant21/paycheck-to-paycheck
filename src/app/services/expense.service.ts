@@ -5,6 +5,7 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   FieldValue,
   getDocs,
@@ -125,8 +126,8 @@ export class ExpenseService {
     let update;
 
     // do nothing if user is already in acl
-    if (document.acl[aclKey].includes(email)) {
-      return { success: true };
+    if (document.acl[aclKey].includes(email) || this.user()?.email === email) {
+      return { success: false, error: 'User already has access to this document' };
     }
 
     // if in viewers and new role is editors, remove user from viewers
@@ -137,7 +138,7 @@ export class ExpenseService {
           viewers: arrayRemove(email)
         }
       }
-    } 
+    }
     // if in editors and new role is viewers, remove user from editors
     else if (aclKey === 'viewers' && document.acl.editors.includes(email)) {
       update = {
@@ -169,14 +170,15 @@ export class ExpenseService {
     }
   }
 
-  async removeFromAcl(document: ExpenseModel, aclKey: 'editors' | 'viewers', email: string): Promise<{ success: boolean, error?: string }> {
+  async removeFromAcl(document: ExpenseModel, email: string): Promise<{ success: boolean, error?: string }> {
     const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
     const docRef = doc(expenseCollectionRef, document.id);
 
     try {
       await setDoc(docRef, {
         acl: {
-          [aclKey]: arrayRemove(email)
+          editors: arrayRemove(email),
+          viewers: arrayRemove(email)
         },
         modified: new Date()
       }, {merge: true});
@@ -185,6 +187,19 @@ export class ExpenseService {
     } catch (err) {
       console.warn(err);
       return { success: false, error: 'Apologies! There was an error updating your document. Please try again later.' }
+    }
+  }
+
+  async deleteDocument(document: ExpenseModel): Promise<{ success: boolean, error?: string }> {
+    const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
+    const docRef = doc(expenseCollectionRef, document.id);
+
+    try {
+      await deleteDoc(docRef);
+      return { success: true };
+    } catch (err) {
+      console.warn(err);
+      return { success: false, error: 'There was an error trying to delete the docuemnt.' };
     }
   }
 }

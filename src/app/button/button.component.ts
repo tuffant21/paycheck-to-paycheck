@@ -16,7 +16,7 @@ import { IconsComponent } from "./icons/icons.component";
   styleUrl: './button.component.scss'
 })
 export class ButtonComponent {
-  animateSpin = input<boolean>(false);
+  loading = input<boolean>(false);
   clazz = input<string>();
   color = input.required<'blue' | 'green' | 'red' | 'gray' | 'transparent'>();
   disabled = input<boolean>(false);
@@ -63,7 +63,7 @@ export class ButtonComponent {
   });
 
   animateSpinClass = computed(() => {
-    return this.animateSpin() ? 'inline-flex items-center' : '';
+    return this.loading() ? 'inline-flex items-center' : '';
   });
 
   allClasses = computed(() => {

@@ -1,6 +1,6 @@
 <div class="relative">
   <app-button color="gray" clazz="flex items-center" icon="dropdown" [type]="'button'" [text]="label()"
-    (click)="toggleDropdown()"></app-button>
+    [loading]="loading()" [disabled]="disabled()" (click)="toggleDropdown()"></app-button>
 
   <div #dropdownMenu class="dropdown-menu hidden" [ngClass]="{ 'block': isOpen(), 'hidden': !isOpen() }">
     <div class="w-auto min-w-40 bg-white border border-gray-200 rounded shadow-lg">

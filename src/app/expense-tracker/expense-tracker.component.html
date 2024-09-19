@@ -18,7 +18,7 @@
     <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
       <thead class="bg-gray-50">
         <tr>
-          @for (header of document()?.headers ?? []; track header) {
+          @for (header of document()?.headers ?? []; track header.key) {
           <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer"
             (click)="sortTable(header.key)">
             {{ header.display }}
@@ -86,7 +86,7 @@
     <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
       <thead class="bg-gray-50">
         <tr>
-          @for (header of document()?.headers ?? []; track header) {
+          @for (header of document()?.headers ?? []; track header.key) {
           <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer"
             (click)="sortTable(header?.key)">
             {{ header.display }}
@@ -128,8 +128,16 @@
 
   <!-- Delete Document Modal -->
   @if (isOwner()) {
-  <app-modal [visible]="showDeleteDocumentModal()" title="Delete Document" confirmText="delete" closeText="cancel"
-    (confirmAction)="deleteDocument()" (closeAction)="closeDeleteDocumentModal()">
+  <app-modal
+    [visible]="showDeleteDocumentModal()"
+    [disabled]="deletingDocument()"
+    [loading]="deletingDocument()"
+    title="Delete Document"
+    confirmText="delete"
+    closeText="cancel"
+    (confirmAction)="deleteDocument()"
+    (closeAction)="closeDeleteDocumentModal()"
+  >
     <p class="text-gray-600">Are you sure you want to delete this document? This action cannot be undone.</p>
   </app-modal>
   }
@@ -163,7 +171,7 @@
       <div class="flex justify-end mb-4">
         <app-button text="Add" type="submit" color="green" clazz="px-10"
           [disabled]="shareEmail.invalid || newUserRole() === null || sendingShareRequest()"
-          [animateSpin]="sendingShareRequest()"
+          [loading]="sendingShareRequest()"
         ></app-button>
       </div>
     </form>
@@ -171,15 +179,16 @@
     @if (flatmapAcl()) {
     <h4 class="font-semibold mb-2">Shared With:</h4>
     <ul class="max-h-48 overflow-y-auto border border-gray-200 rounded p-2 space-y-2">
-      @for (acl of flatmapAcl(); track acl) {
+      @for (acl of flatmapAcl(); track acl.email) {
       <li class="flex items-center justify-between hover:bg-gray-100">
         <span class="ml-4 mr-4">{{ acl.email }}</span>
         <div class="flex items-center">
-          <app-dropdown [label]="acl.role" [actions]="[
-                  { id: 'viewer', label: 'Viewer' },
-                  { id: 'editor', label: 'Editor' },
-                  { id: 'remove', label: 'Remove Access' }
-                ]" (dropdownItemClicked)="handleUpdateAcl($event, acl)"></app-dropdown>
+          <app-dropdown
+            [label]="acl.role"
+            [actions]="getAclActions(acl)"
+            [loading]="updatingUserAcl() === acl"
+            [disabled]="updatingUserAcl() !== null"
+            (dropdownItemClicked)="handleUpdateAcl($event, acl)"></app-dropdown>
         </div>
       </li>
       } @empty {

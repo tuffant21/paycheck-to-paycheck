@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, inject, Inject, input, OnDestroy, output, Renderer2, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, inject, input, OnDestroy, output, Renderer2, signal, ViewChild } from '@angular/core';
 import { DOCUMENT, NgClass, TitleCasePipe } from '@angular/common';
 import { ButtonComponent } from '../button/button.component';
 
@@ -16,6 +16,8 @@ import { ButtonComponent } from '../button/button.component';
 export class DropdownComponent implements OnDestroy {
   label = input.required<string>();
   actions = input.required<{ id: string, label: string }[]>();
+  loading = input<boolean>(false);
+  disabled = input<boolean>(false);
   dropdownItemClicked = output<string>();
   isOpen = signal<boolean>(false);
 

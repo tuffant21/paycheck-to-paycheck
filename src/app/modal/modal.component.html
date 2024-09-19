@@ -26,6 +26,8 @@
             color="blue"
             class="ml-4"
             [text]="confirmText()"
+            [disabled]="disabled()"
+            [loading]="loading()"
             (click)="confirmAction.emit()"
           ></app-button>
         }

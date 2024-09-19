@@ -3,7 +3,7 @@
   [disabled]="disabled()"
   [type]="type()"
 >
-  @if (animateSpin()) {
+  @if (loading()) {
     <app-icons icon="animate-spin"></app-icons>
   }
   @if (icon() && positionIcon() === 'left') {

@@ -18,6 +18,8 @@ export class ModalComponent {
   title = input.required<string>();
   confirmText = input<string>();
   closeText = input.required<string>();
+  disabled = input<boolean>(false);
+  loading = input<boolean>(false);
 
   confirmAction = output();
   closeAction = output();

@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, Signal, WritableSignal } from '@angular/core';
 import { ExpenseModel } from "../models/expense-model";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { DecimalPipe, TitleCasePipe } from "@angular/common";
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ExpenseService } from "../services/expense.service";
@@ -28,6 +28,7 @@ import { User } from "firebase/auth";
 })
 export class ExpenseTrackerComponent {
   private route: ActivatedRoute = inject(ActivatedRoute);
+  private router: Router = inject(Router);
   private expenseService: ExpenseService = inject(ExpenseService);
   private user: Signal<User | null> = toSignal(getUser$(), { initialValue: null });
 
@@ -189,8 +190,17 @@ export class ExpenseTrackerComponent {
     this.actionBill = bill;
   }
 
+  confirmAction() {
+    const document = this.document();
+    if (this.actionBill && document) {
+      document.data = document.data?.filter((b) => b !== this.actionBill);
+      this.actionBill = null;
+    }
+  }
+
   // delete document modal
   showDeleteDocumentModal: WritableSignal<boolean> = signal(false);
+  deletingDocument: WritableSignal<boolean> = signal(false);
 
   openDeleteDocumentModal() {
     this.showDeleteDocumentModal.set(true);
@@ -202,13 +212,20 @@ export class ExpenseTrackerComponent {
 
   // Delete document
   async deleteDocument() {
-  }
-
-  confirmAction() {
     const document = this.document();
-    if (this.actionBill && document) {
-      document.data = document.data?.filter((b) => b !== this.actionBill);
-      this.actionBill = null;
+
+    if (!document) {
+      return;
+    }
+
+    this.deletingDocument.set(true);
+    const resp = await this.expenseService.deleteDocument(document);
+    this.deletingDocument.set(false);
+    
+    if (resp.success) {
+      this.router.navigate(['/documents']);
+    } else {
+      window.alert(resp.error);
     }
   }
 
@@ -230,13 +247,12 @@ export class ExpenseTrackerComponent {
   });
   emailError: WritableSignal<string> = signal('');
   sendingShareRequest: WritableSignal<boolean> = signal(false);
+  updatingUserAcl: WritableSignal<{ role: string, email: string } | null> = signal(null);
 
-  // Open the share document modal
   openShareModal() {
     this.showShareModal.set(true);
   }
 
-  // Close the share document modal
   closeShareModal() {
     this.showShareModal.set(false);
   }
@@ -259,7 +275,6 @@ export class ExpenseTrackerComponent {
     }
   }
 
-  // Share or manage document access
   async shareDocument() {
     const document = this.document();
     const role = this.newUserRoleToAclKey();
@@ -281,6 +296,20 @@ export class ExpenseTrackerComponent {
     }
   }
 
+  getAclActions(acl: { role: string, email: string }) {
+    if (acl.role === 'viewer') {
+      return [
+        { id: 'editor', label: 'Editor' },
+        { id: 'remove', label: 'Remove Access' }
+      ];
+    } else {
+      return [
+        { id: 'viewer', label: 'Viewer' },
+        { id: 'remove', label: 'Remove Access' }
+      ];
+    }
+  }
+
   async handleUpdateAcl(eventId: string, acl: { role: string, email: string }) {
     const document = this.document();
     if (!document) return;
@@ -288,29 +317,34 @@ export class ExpenseTrackerComponent {
     if (eventId === 'remove') {
       this.pendingRemoveAccess.set(acl);
       this.showConfirmRemoveAccessModal.set(true);
-    } else if (eventId === 'viewer') {
-      const resp = await this.expenseService.addToAcl(document, 'viewers', acl.email);
-      console.log(resp);
-    } else if (eventId === 'editor') {
-      const resp = await this.expenseService.addToAcl(document, 'editors', acl.email);
+      return;
+    }
+
+    this.updatingUserAcl.set(acl);
+    const resp = await this.expenseService.addToAcl(
+      document, 
+      eventId === 'viewer' ? 'viewers' : 'editors',
+      acl.email
+    );
+    this.updatingUserAcl.set(null);
+    if (!resp.success) {
+      window.alert(resp.error);
     }
   }
 
-  confirmRemoveAccess() {
+  async confirmRemoveAccess() {
+    const document = this.document();
     const acl = this.pendingRemoveAccess();
-    if (acl) {
-      // const docRef = doc(this.firestore, `expenses/${this.expenseId}`);
-      // if (acl.role === 'editor') {
-      //   updateDoc(docRef, {
-      //     'acl.editors': arrayRemove(acl.email),
-      //   });
-      // } else {
-      //   updateDoc(docRef, {
-      //     'acl.viewers': arrayRemove(acl.email),
-      //   });
-      // }
+    if (acl && document) {
       this.showConfirmRemoveAccessModal.set(false);
+      this.updatingUserAcl.set(acl);
+      const resp = await this.expenseService.removeFromAcl(document, acl.email);
+      this.updatingUserAcl.set(null);
       this.pendingRemoveAccess.set(null);
+
+      if (!resp.success) {
+        window.alert(resp.error);
+      }
     }
   }
 
