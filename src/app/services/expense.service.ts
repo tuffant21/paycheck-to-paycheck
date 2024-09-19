@@ -23,6 +23,7 @@ import {
 import { FIREBASE_FIRESTORE } from "../providers/firebase-firestore.provider";
 import { getUser$ } from "./user.service";
 import { toSignal } from "@angular/core/rxjs-interop";
+import { RestResult } from './result.type';
 
 @Injectable({
   providedIn: 'root',
@@ -32,8 +33,22 @@ export class ExpenseService {
   private firestore = inject(FIREBASE_FIRESTORE);
   private user = toSignal(getUser$());
 
-  // Create a new document
-  async createDocument(): Promise<string> {
+  // Observables
+  getDocument$(id: string): Observable<ExpenseModel | undefined> {
+    return new Observable(observer => {
+      const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
+      const unsubscribe = onSnapshot(doc(expenseCollectionRef, id), (doc) => {
+        observer.next(doc.data() as ExpenseModel);
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    });
+  }
+
+  // Promises
+  async createDocument(): RestResult<{ id: string }> {
     const uid = this.user()?.uid;
 
     if (!uid) {
@@ -76,25 +91,16 @@ export class ExpenseService {
       }
     };
 
-    await setDoc(docRef, defaultDocument);
-    return id;
+    try {
+      await setDoc(docRef, defaultDocument);
+      return { success: true, data: { id }};
+    } catch (err) {
+      console.warn(err);
+      return { success: false, error: 'There was an issue creating your document. Please try again later.' };
+    }
   }
 
-  getDocument$(id: string): Observable<ExpenseModel | undefined> {
-    return new Observable(observer => {
-      const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
-      const unsubscribe = onSnapshot(doc(expenseCollectionRef, id), (doc) => {
-        observer.next(doc.data() as ExpenseModel);
-      });
-
-      return () => {
-        unsubscribe();
-      };
-    });
-  }
-
-  // Get paginated documents (10 per page)
-  async getDocuments(startPosition: QueryNonFilterConstraint | null, filter: 'all' | 'owned' | 'shared', sortBy: 'created' | 'modified', direction: OrderByDirection): Promise<QuerySnapshot> {
+  async getDocuments(startPosition: QueryNonFilterConstraint | null, filter: 'all' | 'owned' | 'shared', sortBy: 'created' | 'modified', direction: OrderByDirection): RestResult<QuerySnapshot> {
     const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
     const uid = this.user()?.uid;
     const email = this.user()?.email
@@ -117,10 +123,21 @@ export class ExpenseService {
       query(expenseCollectionRef, whereFilter, orderBy(sortBy, direction), startPosition, limit(10)) :
       query(expenseCollectionRef, whereFilter, orderBy(sortBy, direction), limit(10));
 
-    return getDocs(q);
+    try {
+      const docs = await getDocs(q);
+      return {
+        success: true,
+        data: docs
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: 'There was an issue getting your documents. Please try again later.'
+      };
+    }
   }
 
-  async addToAcl(document: ExpenseModel, aclKey: 'editors' | 'viewers', email: string): Promise<{ success: boolean, error?: string }> {
+  async addToAcl(document: ExpenseModel, aclKey: 'editors' | 'viewers', email: string): RestResult {
     const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
     const docRef = doc(expenseCollectionRef, document.id);
     let update;
@@ -163,14 +180,14 @@ export class ExpenseService {
         modified: new Date()
       }, {merge: true});
 
-      return { success: true };
+      return { success: true, data: null };
     } catch (err) {
       console.warn(err);
       return { success: false, error: 'Apologies! There was an error updating your document. Please try again later.' }
     }
   }
 
-  async removeFromAcl(document: ExpenseModel, email: string): Promise<{ success: boolean, error?: string }> {
+  async removeFromAcl(document: ExpenseModel, email: string): RestResult {
     const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
     const docRef = doc(expenseCollectionRef, document.id);
 
@@ -183,20 +200,20 @@ export class ExpenseService {
         modified: new Date()
       }, {merge: true});
 
-      return { success: true };
+      return { success: true, data: null };
     } catch (err) {
       console.warn(err);
       return { success: false, error: 'Apologies! There was an error updating your document. Please try again later.' }
     }
   }
 
-  async deleteDocument(document: ExpenseModel): Promise<{ success: boolean, error?: string }> {
+  async deleteDocument(document: ExpenseModel): RestResult {
     const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
     const docRef = doc(expenseCollectionRef, document.id);
 
     try {
       await deleteDoc(docRef);
-      return { success: true };
+      return { success: true, data: null };
     } catch (err) {
       console.warn(err);
       return { success: false, error: 'There was an error trying to delete the docuemnt.' };

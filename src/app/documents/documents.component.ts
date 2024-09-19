@@ -54,6 +54,7 @@ export class DocumentsComponent implements OnInit {
     const snapshot = this.currentSnapshot();
     return snapshot ? snapshot.docs.map(doc => doc.data() as ExpenseModel) : [];
   });
+  public creatingNewDocument: WritableSignal<boolean> = signal(false);
 
   ngOnInit() {
     this.resetSnapshots();
@@ -71,9 +72,13 @@ export class DocumentsComponent implements OnInit {
       this.currentSnapshot.set(this.nextSnapshot());
       this.nextSnapshot.set(undefined);
 
+      // preload next result set
       if (nextSnapshot.size === 10) {
-        const next = await this.expenseService.getDocuments(startAfter(startAfterLastDoc), this.filter(), this.sortBy(), this.sortDirection());
-        this.nextSnapshot.set(next);
+        const resp = await this.expenseService.getDocuments(startAfter(startAfterLastDoc), this.filter(), this.sortBy(), this.sortDirection());
+
+        resp.success
+          ? this.nextSnapshot.set(resp.data)
+          : window.alert(resp.error);
       }
     }
   }
@@ -84,8 +89,11 @@ export class DocumentsComponent implements OnInit {
       this.nextSnapshot.set(this.currentSnapshot());
       this.previousSnapshotStart.update((prev) => prev.slice(0, prev.length - 1));
 
-      const previous = await this.expenseService.getDocuments(startAt(previousRef), this.filter(), this.sortBy(), this.sortDirection());
-      this.currentSnapshot.set(previous);
+      const resp = await this.expenseService.getDocuments(startAt(previousRef), this.filter(), this.sortBy(), this.sortDirection());
+
+      resp.success
+        ? this.currentSnapshot.set(resp.data)
+        : window.alert(resp.error);
     }
   }
 
@@ -106,8 +114,13 @@ export class DocumentsComponent implements OnInit {
   }
 
   async createDocument(): Promise<void> {
-    const docId = await this.expenseService.createDocument();
-    this.router.navigate(['/expense-tracker', docId]);
+    this.creatingNewDocument.set(true);
+    const resp = await this.expenseService.createDocument();
+    this.creatingNewDocument.set(false);
+
+    resp.success
+      ? this.router.navigate(['/expense-tracker', resp.data.id])
+      : window.alert(resp.error);
   }
 
   private async resetSnapshots(): Promise<void> {
@@ -115,13 +128,22 @@ export class DocumentsComponent implements OnInit {
     this.currentSnapshot.set(undefined);
     this.nextSnapshot.set(undefined);
 
-    const currentSnapshot = await this.expenseService.getDocuments(null, this.filter(), this.sortBy(), this.sortDirection());
-    this.currentSnapshot.set(currentSnapshot);
+    let resp = await this.expenseService.getDocuments(null, this.filter(), this.sortBy(), this.sortDirection());
 
-    if (currentSnapshot.size === 10) {
-      const startAfterLastDoc = currentSnapshot.docs[currentSnapshot.size - 1];
-      const nextSnapshot = await this.expenseService.getDocuments(startAfter(startAfterLastDoc), this.filter(), this.sortBy(), this.sortDirection());
-      this.nextSnapshot.set(nextSnapshot);
+    if (!resp.success) {
+      window.alert(resp.error);
+      return;
+    }
+
+    this.currentSnapshot.set(resp.data);
+
+    if (resp.data.size === 10) {
+      const startAfterLastDoc = resp.data.docs[resp.data.size - 1];
+      resp = await this.expenseService.getDocuments(startAfter(startAfterLastDoc), this.filter(), this.sortBy(), this.sortDirection());
+
+      resp.success
+        ? this.nextSnapshot.set(resp.data)
+        : window.alert(resp.error);
     }
   }
 }

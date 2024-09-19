@@ -7,6 +7,8 @@
       class="w-full md:w-auto"
       clazz="w-full md:w-auto"
       text="Create New Document"
+      [disabled]="creatingNewDocument()"
+      [loading]="creatingNewDocument()"
       (click)="createDocument()"
     ></app-button>
   </div>
