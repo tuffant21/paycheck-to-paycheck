@@ -48,7 +48,7 @@ export class ExpenseService {
   }
 
   // Promises
-  async createDocument(): RestResult<{ id: string }> {
+  async createDocument(): RestResult<ExpenseModel<Date>> {
     const uid = this.user()?.uid;
 
     if (!uid) {
@@ -93,7 +93,7 @@ export class ExpenseService {
 
     try {
       await setDoc(docRef, defaultDocument);
-      return { success: true, data: { id }};
+      return { success: true, data: defaultDocument };
     } catch (err) {
       console.warn(err);
       return { success: false, error: 'There was an issue creating your document. Please try again later.' };
