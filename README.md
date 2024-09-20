@@ -64,3 +64,53 @@ This project is licensed under the MIT License. See the LICENSE file for more de
 * LinkedIn: LinkedIn Profile
 * Facebook: Facebook Profile
 * Project Facebook Page: Paycheck to Paycheck
+
+## Extra Notes
+These are the commands I used to set up this environment from a brand new computer
+```bash
+# install git
+sudo apt update
+sudo apt upgrade -y
+sudo apt install git -y
+
+# configure git
+git config --global user.email "MY_EMAIL"
+git config --global user.name "MY_NAME"
+
+# create ssh key for github
+ssh-keygen -t ed25519 -C "MY_EMAIL"
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+cat ~/.ssh/id_ed25519.pub # copy value to GitHub
+
+# clone the repo
+git clone git@github.com:tuffant21/paycheck-to-paycheck.git
+
+# install nvm
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+nvm install 20
+node --version # verify version
+
+# install java
+sudo apt install openjdk-22-jre-headless
+java -version # verify version
+
+# install angular cli
+npm install -g @angular/cli
+
+# install firebase tools
+npm install -g firebase-tools
+
+# login
+firebase login
+
+# init
+firebase init
+
+# install dependencies
+npm i
+
+# start services
+npm run emulators
+npm run serve
+```
