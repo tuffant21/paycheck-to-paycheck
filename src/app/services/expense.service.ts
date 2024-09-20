@@ -39,7 +39,7 @@ export class ExpenseService {
       const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
       const unsubscribe = onSnapshot(doc(expenseCollectionRef, id), (doc) => {
         observer.next(doc.data() as ExpenseModel);
-      });
+      }, observer.error);
 
       return () => {
         unsubscribe();
@@ -134,6 +134,23 @@ export class ExpenseService {
         success: false,
         error: 'There was an issue getting your documents. Please try again later.'
       };
+    }
+  }
+
+  async updateDocument(document: ExpenseModel): RestResult {
+    const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
+    const docRef = doc(expenseCollectionRef, document.id);
+
+    try {
+      await setDoc(docRef, {
+        ...document,
+        modified: new Date()
+      }, {merge: true});
+
+      return { success: true, data: null };
+    } catch (err) {
+      console.warn(err);
+      return { success: false, error: 'Apologies! There was an error updating your document. Please try again later.' }
     }
   }
 

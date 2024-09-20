@@ -8,10 +8,10 @@ export type ExpenseModel<DATE_TYPE = Timestamp> = {
   modified: DATE_TYPE;
   createdBy: string;
   title: string;
-  headers: { key?: string, type?: HeaderType, display?: string }[];
+  headers: { key: string, type: HeaderType, display: string }[];
   data: {
     [key: string]: any;
-    __disabled?: boolean;
+    __disabled: boolean;
   }[];
   acl: {
     editors: string[];

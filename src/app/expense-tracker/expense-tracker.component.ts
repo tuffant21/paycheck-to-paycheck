@@ -89,54 +89,36 @@ export class ExpenseTrackerComponent {
     }
   }
 
-  // state
+  // title
+  async saveTitle($event: Event) {
+    const document = this.document();
+    const target = <HTMLTextAreaElement>($event.target ?? {});
+
+    if (!document || !target.value) return;
+
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      title: target.value
+    });
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
+  }
+
+  // table state
   sortBy: string | null = null;
   sortDirection: 'asc' | 'desc' | null = null;
-  editingCell: { [bill: string]: { [header: string]: boolean } } = {};
-  actionBill: any;
 
-  initializeEditingState() {
-    // this.expense?.data?.forEach(bill => {
-    //   this.editingCell[bill] = {};
-    //   this.expense?.headers?.forEach(header => {
-    //     this.editingCell[bill][header.key] = false;
-    //   });
-    // });
+  async saveCell() {
   }
-
-  // Enable editing of the clicked cell
-  editCell(bill?: any, headerKey?: string) {
-    if (!bill || !headerKey) return;
-
-    this.editingCell[bill][headerKey] = true;
-  }
-
-  // Save the edited value and close the input field
-  async saveCell(bill: any, headerKey: string) {
-    // this.editingCell[bill][headerKey] = false;
-    //
-    // const docRef = doc(this.firestore, `expenses/${this.expenseId}`);
-    // await updateDoc(docRef, {
-    //   [`data`]: this.expense?.data,
-    // });
-  }
-
-  // async getExpenseDocument(id: string) {
-  //   const docRef = doc(this.firestore, `expenses/${id}`);
-  //   const docSnap = await getDoc(docRef);
-  //
-  //   if (docSnap.exists()) {
-  //     this.expense = docSnap.data() as ExpenseModel;
-  //     this.initializeEditingState();
-  //   }
-  // }
 
   // Sorting logic for table columns
   sortTable(column: string | undefined) {
     if (!column) return;
 
     const document = this.document();
-    if (!document || !document.data) return;
+    if (!document) return;
 
     if (this.sortBy === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : this.sortDirection === 'desc' ? null : 'asc';
@@ -153,22 +135,23 @@ export class ExpenseTrackerComponent {
   }
 
   // Add a new bill (you can extend this logic as needed)
-  addNewBill() {
+  async addNewBill() {
     const document = this.document();
-    if (!document || !document.data) return;
+    if (!document) return;
 
-    const newBill = {
-      bill: 'New Bill',
-      dueDate: '',
-      autoPay: false,
-      due: '',
-      balance: '',
-      website: '',
-      lastPaymentDate: '',
-      disabled: false,
-    };
+    let newBill = { __disabled: false };
 
-    document.data.push(newBill);
+    for(const header of document.headers) {
+      newBill = { ...newBill, [header.key]: '' }
+    }
+
+    await this.expenseService.updateDocument({
+      ...document,
+      data: [
+        ...document.data,
+        newBill
+      ]
+    });
   }
 
   // Disable a bill
@@ -187,15 +170,15 @@ export class ExpenseTrackerComponent {
 
   // Confirm delete action for bills
   confirmDeleteBill(bill: any) {
-    this.actionBill = bill;
+    // this.actionBill = bill;
   }
 
   confirmAction() {
-    const document = this.document();
-    if (this.actionBill && document) {
-      document.data = document.data?.filter((b) => b !== this.actionBill);
-      this.actionBill = null;
-    }
+    // const document = this.document();
+    // if (this.actionBill && document) {
+    //   document.data = document.data?.filter((b) => b !== this.actionBill);
+    //   this.actionBill = null;
+    // }
   }
 
   // delete document modal
