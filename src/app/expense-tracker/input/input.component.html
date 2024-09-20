@@ -1,0 +1,15 @@
+<div class="flex items-center space-x-1">
+    @if (type() === 'number') {
+        <span>$</span>
+    }
+    <input
+        [type]="type()"
+        [ngClass]="allClasses()"
+        [value]="value() ?? ''"
+        [disabled]="disabled()"
+        (focus)="selectText($event)"
+        (keyup.enter)="update($event, true)"
+        (keyup.escape)="update($event, true)"
+        (blur)="update($event, false)"
+    />
+</div>

@@ -1,14 +1,13 @@
-<div class="max-w-6xl mx-auto mt-10 p-6 bg-white shadow-md rounded">
+<div class="w-screen mx-auto mt-10 p-6 bg-white shadow-md rounded">
   <!-- Document Title and Manage Button -->
   <div class="flex justify-between items-center mb-6">
     <!-- Document Title -->
-    <input 
-      type="text"
-      class="text-2xl font-bold text-gray-800 rounded hover:outline hover:outline-gray-300 pl-1 pr-1"
+    <app-input
+      clazz="text-2xl font-bold text-gray-800"
       [value]="document()?.title"
-      (keyup.enter)="saveTitle($event)"
-      (blur)="saveTitle($event)"
-    />
+      [disabled]="isViewer()"
+      (updated)="saveTitle($event)"
+    ></app-input>
 
     <!-- Manage Document Dropdown -->
     @if (isOwner() || isEditor()) {
@@ -42,34 +41,20 @@
         @for (bill of document()?.data ?? []; track bill) {
         @if (!bill.__disabled) {
         <tr>
-          @for (header of document()?.headers ?? []; track header) {
+          @for (header of document()?.headers ?? []; track header.key) {
           <td class="px-4 py-2 border-t border-gray-200">
-            <!-- Editable cell: Display as text, and switch to input on click -->
-            <!--                  @if (!editingCell[bill][header.key]) {-->
-            <span>
-              <!-- Handle field type dynamically -->
-              @if (header.type === 'currency') {
-              ${{ bill?.[header?.key || ''] | number:'1.2-2' }}
-              } @else {
-              {{ bill?.[header?.key || ''] }}
-              }
-            </span>
-            <!--                  }-->
-
-            <!-- Input field for editing -->
-            <!--                  @if (editingCell[bill][header.key]) {-->
-            <!--                    <input-->
-            <!--                     [(ngModel)]="bill[header.key]"-->
-            <!--                     (blur)="saveCell(bill, header.key)"-->
-            <!--                     class="w-full px-2 py-1 border border-gray-300 rounded" />-->
-            <!--                  }-->
+            <app-input
+              [value]="bill[header.key]"
+              [disabled]="isViewer()"
+              [type]="header.type"
+            ></app-input>
           </td>
           }
           @if (isOwner() || isEditor()) {
           <td class="px-4 py-2 border-t border-gray-200">
             <app-button text="Disable" color="gray" padding="sm" (click)="disableBill(bill)"></app-button>
 
-            <app-button text="Delete" color="gray" padding="sm" (click)="confirmDeleteBill(bill)"></app-button>
+            <app-button text="Delete" color="gray" padding="sm" (click)="openDeleteBillModal(bill)"></app-button>
           </td>
           }
         </tr>
@@ -112,17 +97,17 @@
         <tr>
           @for (header of document()?.headers ?? []; track header) {
           <td class="px-4 py-2 border-t border-gray-200">
-            @if (header?.type === 'currency') {
-            ${{ bill?.[header?.key || ''] | number:'1.2-2' }}
-            } @else {
-            {{ bill?.[header?.key || ''] }}
-            }
+            <app-input
+              [value]="bill[header.key]"
+              [disabled]="isViewer()"
+              [type]="header.type"
+            ></app-input>
           </td>
           }
           @if (isOwner() || isEditor()) {
           <td class="px-4 py-2 border-t border-gray-200">
-            <app-button text="Enable" color="green" padding="sm" (click)="enableBill(bill)"></app-button>
-            <app-button text="Delete" color="red" padding="sm" (click)="confirmDeleteBill(bill)"></app-button>
+            <app-button text="Enable" color="gray" padding="sm" (click)="enableBill(bill)"></app-button>
+            <app-button text="Delete" color="gray" padding="sm" (click)="openDeleteBillModal(bill)"></app-button>
           </td>
           }
         </tr>
@@ -131,6 +116,27 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Delete Bill Modal -->
+  @if (isOwner() || isEditor()) {
+    <app-modal
+      [visible]="pendingDeleteBill() !== null"
+      [disabled]="deletingBill()"
+      [loading]="deletingBill()"
+      title="Delete Bill"
+      confirmText="delete"
+      closeText="cancel"
+      (confirmAction)="confirmDeleteBill()"
+      (closeAction)="closeDeleteBillModal()"
+    >
+      <p class="text-gray-600 mb-4">Are you sure you want to delete this bill?</p>
+      @for (item of pendingDeleteBill() | keyvalue; track item.key) {
+        @if (item.key !== '__disabled') {
+          <p class="pl-4 mb-1">{{ getHeaderForBillKey(item.key) }}: {{ item.value || '""' }}</p>
+        }
+      }
+    </app-modal>
+  }
 
   <!-- Delete Document Modal -->
   @if (isOwner()) {

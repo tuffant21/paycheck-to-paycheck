@@ -1,6 +1,8 @@
 import { Timestamp } from "firebase/firestore";
 
-export type HeaderType = 'text' | 'boolean' | 'currency' | 'date';
+export type ExpenseHeaderType = 'text' | 'checkbox' | 'number' | 'date';
+export type ExpenseHeader = { key: string, type: ExpenseHeaderType, display: string };
+export type ExpenseData = { [key: string]: any, __disabled: boolean };
 
 export type ExpenseModel<DATE_TYPE = Timestamp> = {
   id: string;
@@ -8,11 +10,8 @@ export type ExpenseModel<DATE_TYPE = Timestamp> = {
   modified: DATE_TYPE;
   createdBy: string;
   title: string;
-  headers: { key: string, type: HeaderType, display: string }[];
-  data: {
-    [key: string]: any;
-    __disabled: boolean;
-  }[];
+  headers: ExpenseHeader[];
+  data: ExpenseData[];
   acl: {
     editors: string[];
     viewers: string[];

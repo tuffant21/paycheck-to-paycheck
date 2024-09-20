@@ -1,15 +1,16 @@
+import { DecimalPipe, KeyValuePipe, TitleCasePipe } from "@angular/common";
 import { Component, computed, inject, signal, Signal, WritableSignal } from '@angular/core';
-import { ExpenseModel } from "../models/expense-model";
-import { ActivatedRoute, Router } from "@angular/router";
-import { DecimalPipe, TitleCasePipe } from "@angular/common";
-import { FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
-import { ExpenseService } from "../services/expense.service";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { ModalComponent } from "../modal/modal.component";
-import { DropdownComponent } from "../dropdown/dropdown.component";
-import { ButtonComponent } from "../button/button.component";
-import { getUser$ } from "../services/user.service";
+import { FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
 import { User } from "firebase/auth";
+import { ButtonComponent } from "../button/button.component";
+import { DropdownComponent } from "../dropdown/dropdown.component";
+import { ModalComponent } from "../modal/modal.component";
+import { ExpenseData, ExpenseModel } from "../models/expense-model";
+import { ExpenseService } from "../services/expense.service";
+import { getUser$ } from "../services/user.service";
+import { InputComponent } from "./input/input.component";
 
 @Component({
   selector: 'app-expense-tracker',
@@ -21,8 +22,10 @@ import { User } from "firebase/auth";
     DropdownComponent,
     TitleCasePipe,
     ReactiveFormsModule,
-    ButtonComponent
-  ],
+    ButtonComponent,
+    InputComponent,
+    KeyValuePipe
+],
   templateUrl: './expense-tracker.component.html',
   styleUrl: './expense-tracker.component.scss'
 })
@@ -90,15 +93,13 @@ export class ExpenseTrackerComponent {
   }
 
   // title
-  async saveTitle($event: Event) {
+  async saveTitle(title: string) {
     const document = this.document();
-    const target = <HTMLTextAreaElement>($event.target ?? {});
-
-    if (!document || !target.value) return;
+    if (!document) return;
 
     const resp = await this.expenseService.updateDocument({
       ...document,
-      title: target.value
+      title
     });
 
     if (!resp.success) {
@@ -109,11 +110,11 @@ export class ExpenseTrackerComponent {
   // table state
   sortBy: string | null = null;
   sortDirection: 'asc' | 'desc' | null = null;
+  addingNewBill: WritableSignal<boolean> = signal(false);
 
   async saveCell() {
   }
 
-  // Sorting logic for table columns
   sortTable(column: string | undefined) {
     if (!column) return;
 
@@ -134,7 +135,6 @@ export class ExpenseTrackerComponent {
     }
   }
 
-  // Add a new bill (you can extend this logic as needed)
   async addNewBill() {
     const document = this.document();
     if (!document) return;
@@ -145,40 +145,96 @@ export class ExpenseTrackerComponent {
       newBill = { ...newBill, [header.key]: '' }
     }
 
-    await this.expenseService.updateDocument({
+    this.addingNewBill.set(true);
+    const resp = await this.expenseService.updateDocument({
       ...document,
       data: [
         ...document.data,
         newBill
       ]
     });
+    this.addingNewBill.set(false);
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
   }
 
-  // Disable a bill
-  disableBill(bill: any) {
+  async disableBill(data: ExpenseData) {
     const document = this.document();
     if (!document) return;
-    bill.disabled = true;
+
+    const otherItems = document.data.filter(d => d !== data);
+
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      data: [
+        ...otherItems,
+        { ...data, __disabled: true }
+      ]
+    });
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
   }
 
-  // Enable a bill
-  enableBill(bill: any) {
+  async enableBill(data: ExpenseData) {
     const document = this.document();
     if (!document) return;
-    bill.disabled = false;
+
+    const otherItems = document.data.filter(d => d !== data);
+
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      data: [
+        ...otherItems,
+        { ...data, __disabled: false }
+      ]
+    });
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
   }
 
-  // Confirm delete action for bills
-  confirmDeleteBill(bill: any) {
-    // this.actionBill = bill;
+  // delete bill modal
+  pendingDeleteBill: WritableSignal<ExpenseData | null> = signal(null);
+  deletingBill: WritableSignal<boolean> = signal(false);
+
+  openDeleteBillModal(data: ExpenseData) {
+    this.pendingDeleteBill.set(data);
   }
 
-  confirmAction() {
-    // const document = this.document();
-    // if (this.actionBill && document) {
-    //   document.data = document.data?.filter((b) => b !== this.actionBill);
-    //   this.actionBill = null;
-    // }
+  closeDeleteBillModal() {
+    this.pendingDeleteBill.set(null);
+  }
+
+  getHeaderForBillKey(key: string) {
+    return this.document()?.headers.find(h => h.key === key)?.display;
+  }
+
+  async confirmDeleteBill() {
+    const document = this.document();
+    const deleteBill = this.pendingDeleteBill();
+    if (!document || !deleteBill) return;
+
+    const otherItems = document.data.filter(d => d !== deleteBill);
+
+    this.deletingBill.set(true);
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      data: [
+        ...otherItems
+      ]
+    });
+    this.deletingBill.set(false);
+
+    if (resp.success) {
+      this.closeDeleteBillModal();
+    } else {
+      window.alert(resp.error);
+    }
   }
 
   // delete document modal

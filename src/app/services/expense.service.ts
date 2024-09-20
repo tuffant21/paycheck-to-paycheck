@@ -1,13 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { ExpenseModel } from "../models/expense-model";
-import { Observable } from "rxjs";
+import { toSignal } from "@angular/core/rxjs-interop";
 import {
   arrayRemove,
   arrayUnion,
   collection,
   deleteDoc,
   doc,
-  FieldValue,
   getDocs,
   limit,
   onSnapshot,
@@ -20,10 +18,11 @@ import {
   setDoc,
   where
 } from 'firebase/firestore';
+import { Observable } from "rxjs";
+import { ExpenseModel } from "../models/expense-model";
 import { FIREBASE_FIRESTORE } from "../providers/firebase-firestore.provider";
-import { getUser$ } from "./user.service";
-import { toSignal } from "@angular/core/rxjs-interop";
 import { RestResult } from './result.type';
+import { getUser$ } from "./user.service";
 
 @Injectable({
   providedIn: 'root',
@@ -69,9 +68,9 @@ export class ExpenseService {
       headers: [
         { key: 'bill', type: 'text', display: 'Bill' },
         { key: 'dueDate', type: 'text', display: 'Due Date' },
-        { key: 'autoPay', type: 'boolean', display: 'Auto Pay' },
-        { key: 'due', type: 'currency', display: 'Due' },
-        { key: 'balance', type: 'currency', display: 'Balance' },
+        { key: 'autoPay', type: 'checkbox', display: 'Auto Pay' },
+        { key: 'due', type: 'number', display: 'Due' },
+        { key: 'balance', type: 'number', display: 'Balance' },
         { key: 'website', type: 'text', display: 'Website' },
         { key: 'lastPaymentDate', type: 'date', display: 'Last Payment Date' },
       ],
@@ -130,6 +129,7 @@ export class ExpenseService {
         data: docs
       };
     } catch (err) {
+      console.warn(err);
       return {
         success: false,
         error: 'There was an issue getting your documents. Please try again later.'
