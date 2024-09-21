@@ -18,7 +18,7 @@ export class BillTableComponent {
   isViewer = input.required<boolean>();
 
   sortTable = output<string>();
-  disableBill = output<ExpenseData>();
+  toggleDisabled = output<ExpenseData>();
   openDeleteBillModal = output<ExpenseData>();
   valueUpdate = output<{ bill: ExpenseData, key: string, value: any }>();
 

@@ -236,7 +236,7 @@ export class ExpenseTrackerComponent {
     }
   }
 
-  async disableBill(data: ExpenseData) {
+  async toggleDisabled(data: ExpenseData) {
     const document = this.document();
     if (!document) return;
 
@@ -246,26 +246,7 @@ export class ExpenseTrackerComponent {
       ...document,
       data: [
         ...otherItems,
-        { ...data, __disabled: true }
-      ]
-    });
-
-    if (!resp.success) {
-      window.alert(resp.error);
-    }
-  }
-
-  async enableBill(data: ExpenseData) {
-    const document = this.document();
-    if (!document) return;
-
-    const otherItems = document.data.filter(d => d !== data);
-
-    const resp = await this.expenseService.updateDocument({
-      ...document,
-      data: [
-        ...otherItems,
-        { ...data, __disabled: false }
+        { ...data, __disabled: !data.__disabled }
       ]
     });
 

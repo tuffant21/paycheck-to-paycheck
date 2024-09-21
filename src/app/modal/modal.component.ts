@@ -30,4 +30,15 @@ export class ModalComponent {
       this.closeAction.emit();
     }
   }
+
+  @HostListener('document:keydown.enter')
+  handleEnter() {
+    if (this.visible()) {
+      if (this.confirmText()) {
+        this.confirmAction.emit();
+      } else {
+        this.closeAction.emit();
+      }
+    }
+  }
 }

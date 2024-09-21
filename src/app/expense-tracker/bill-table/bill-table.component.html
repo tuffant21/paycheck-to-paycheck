@@ -1,45 +1,40 @@
 <div class="overflow-x-auto">
-    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          @for (header of headers(); track header.key) {
-          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer"
-            (click)="sortTable.emit(header.key)">
-            {{ header.display }}
-            @if (header.sort) {
-            <span>{{ header.sort === 'asc' ? '▲' : '▼' }}</span>
-            }
-          </th>
+  <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
+    <thead class="bg-gray-50">
+      <tr>
+        @for (header of headers(); track header.key) {
+        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer"
+          (click)="sortTable.emit(header.key)">
+          {{ header.display }}
+          @if (header.sort) {
+          <span>{{ header.sort === 'asc' ? '▲' : '▼' }}</span>
           }
-          @if (isOwner() || isEditor()) {
-          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Actions</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (bill of data(); track bill) {
-        @if (!bill.__disabled) {
-        <tr>
-          @for (header of headers(); track header.key) {
-          <td class="px-4 py-2 border-t border-gray-200">
-            <app-input
-              [value]="bill[header.key]"
-              [disabled]="isViewer()"
-              [type]="header.type"
-              (updated)="valueUpdated(bill, header.key, $event)"
-            ></app-input>
-          </td>
-          }
-          @if (isOwner() || isEditor()) {
-          <td class="px-4 py-2 border-t border-gray-200">
-            <app-button text="Disable" color="gray" padding="sm" (click)="disableBill.emit(bill)"></app-button>
+        </th>
+        }
+        @if (isOwner() || isEditor()) {
+        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Actions</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (bill of data(); track bill) {
+      <tr>
+        @for (header of headers(); track header.key) {
+        <td class="px-4 py-2 border-t border-gray-200">
+          <app-input [value]="bill[header.key]" [disabled]="isViewer()" [type]="header.type"
+            (updated)="valueUpdated(bill, header.key, $event)"></app-input>
+        </td>
+        }
+        @if (isOwner() || isEditor()) {
+        <td class="px-4 py-2 border-t border-gray-200">
+          <app-button [text]="bill.__disabled ? 'Enable' : 'Disable'" color="gray" padding="sm"
+            (click)="toggleDisabled.emit(bill)"></app-button>
 
-            <app-button text="Delete" color="gray" padding="sm" (click)="openDeleteBillModal.emit(bill)"></app-button>
-          </td>
-          }
-        </tr>
+          <app-button text="Delete" color="gray" padding="sm" (click)="openDeleteBillModal.emit(bill)"></app-button>
+        </td>
         }
-        }
-      </tbody>
-    </table>
-  </div>
+      </tr>
+      }
+    </tbody>
+  </table>
+</div>
