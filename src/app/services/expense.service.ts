@@ -81,6 +81,7 @@ export class ExpenseService {
           autoPay: true,
           due: '1.00',
           website: 'paycheck-to-paycheck.com',
+          __id: crypto.randomUUID(),
           __disabled: false
         }
       ],

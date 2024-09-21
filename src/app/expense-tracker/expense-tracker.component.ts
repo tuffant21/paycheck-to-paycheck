@@ -215,7 +215,7 @@ export class ExpenseTrackerComponent {
     const document = this.document();
     if (!document) return;
 
-    let newBill = { __disabled: false };
+    let newBill = { __disabled: false, __id: crypto.randomUUID() };
 
     for(const header of document.headers) {
       newBill = { ...newBill, [header.key]: '' }

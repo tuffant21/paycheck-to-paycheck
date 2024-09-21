@@ -17,7 +17,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (bill of data(); track bill) {
+      @for (bill of data(); track bill.__id) {
       <tr>
         @for (header of headers(); track header.key) {
         <td class="px-4 py-2 border-t border-gray-200">

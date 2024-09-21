@@ -10,6 +10,7 @@ export type ExpenseHeader = {
 };
 export type ExpenseData = {
   [key: string]: any,
+  __id: string,
   __disabled: boolean
 };
 
