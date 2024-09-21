@@ -71,7 +71,7 @@ export class ExpenseService {
         { key: 'autoPay', type: 'checkbox', display: 'Auto Pay' },
         { key: 'due', type: 'number', display: 'Due' },
         { key: 'balance', type: 'number', display: 'Balance' },
-        { key: 'website', type: 'text', display: 'Website' },
+        { key: 'creditor', type: 'text', display: 'Creditor' },
         { key: 'lastPaymentDate', type: 'date', display: 'Last Payment Date' },
       ],
       data: [
@@ -80,7 +80,7 @@ export class ExpenseService {
           dueDate: '1st day of month',
           autoPay: true,
           due: '1.00',
-          website: 'paycheck-to-paycheck.com',
+          creditor: 'paycheck-to-paycheck.com',
           __id: crypto.randomUUID(),
           __disabled: false
         }
