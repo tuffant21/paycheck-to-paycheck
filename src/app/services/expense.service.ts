@@ -66,7 +66,7 @@ export class ExpenseService {
       modified: date,
       title: 'New Document',
       headers: [
-        { key: 'bill', type: 'text', display: 'Bill' },
+        { key: 'bill', type: 'text', display: 'Bill', sort: 'asc' },
         { key: 'dueDate', type: 'text', display: 'Due Date' },
         { key: 'autoPay', type: 'checkbox', display: 'Auto Pay' },
         { key: 'due', type: 'number', display: 'Due' },

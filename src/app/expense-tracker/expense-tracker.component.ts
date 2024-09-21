@@ -4,12 +4,14 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { User } from "firebase/auth";
+import { Timestamp } from "firebase/firestore";
 import { ButtonComponent } from "../button/button.component";
 import { DropdownComponent } from "../dropdown/dropdown.component";
 import { ModalComponent } from "../modal/modal.component";
-import { ExpenseData, ExpenseModel } from "../models/expense-model";
+import { ExpenseData, ExpenseHeader, ExpenseHeaderSort, ExpenseModel } from "../models/expense-model";
 import { ExpenseService } from "../services/expense.service";
 import { getUser$ } from "../services/user.service";
+import { BillTableComponent } from "./bill-table/bill-table.component";
 import { InputComponent } from "./input/input.component";
 
 @Component({
@@ -24,7 +26,8 @@ import { InputComponent } from "./input/input.component";
     ReactiveFormsModule,
     ButtonComponent,
     InputComponent,
-    KeyValuePipe
+    KeyValuePipe,
+    BillTableComponent
 ],
   templateUrl: './expense-tracker.component.html',
   styleUrl: './expense-tracker.component.scss'
@@ -36,6 +39,15 @@ export class ExpenseTrackerComponent {
   private user: Signal<User | null> = toSignal(getUser$(), { initialValue: null });
 
   public document: Signal<ExpenseModel | undefined> = toSignal(this.expenseService.getDocument$(this.route.snapshot.paramMap.get('id') ?? ''));
+  public headers: Signal<ExpenseHeader[]> = computed(() => {
+    return this.document()?.headers ?? [];
+  });
+  public enabledBills: Signal<ExpenseData[]> = computed(() => {
+    return this.document()?.data.filter(d => !d.__disabled) ?? [];
+  });
+  public disabledBills: Signal<ExpenseData[]> = computed(() => {
+    return this.document()?.data.filter(d => d.__disabled) ?? [];
+  });
   public flatmapAcl: Signal<{ role: string, email: string }[]> = computed(() => {
     const document = this.document();
     if (!document) return [];
@@ -108,31 +120,95 @@ export class ExpenseTrackerComponent {
   }
 
   // table state
-  sortBy: string | null = null;
-  sortDirection: 'asc' | 'desc' | null = null;
   addingNewBill: WritableSignal<boolean> = signal(false);
 
-  async saveCell() {
-  }
-
-  sortTable(column: string | undefined) {
-    if (!column) return;
-
+  async saveCell({ bill, key, value }: { bill: ExpenseData, key: string, value: any }) {
     const document = this.document();
     if (!document) return;
 
-    if (this.sortBy === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : this.sortDirection === 'desc' ? null : 'asc';
-    } else {
-      this.sortBy = column;
-      this.sortDirection = 'asc';
-    }
+    const data = document.data.filter(d => d !== bill);
 
-    if (this.sortDirection) {
-      document.data.sort((a, b) =>
-        this.sortDirection === 'asc' ? (a[column] > b[column] ? 1 : -1) : (a[column] < b[column] ? 1 : -1)
-      );
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      data: [
+        ...data,
+        { ...bill, [key]: value }
+      ]
+    });
+
+    if (!resp.success) {
+      window.alert(resp.error);
     }
+  }
+
+  async sortTable(headerKey: string) {
+    const document = this.document();
+    if (!document) return;
+
+    // Reset all other headers' sort states to undefined
+    const headers = document.headers.map(h => {
+      const header = { ...h }
+
+      if (header.key !== headerKey) {
+        delete header.sort;
+      }
+
+      return header;
+    });
+  
+    // Find the header that corresponds to the clicked column
+    const header = headers.find(h => h.key === headerKey);
+    if (!header) return;
+  
+    // Toggle the sort state: 'asc' -> 'desc' -> 'asc'
+    if (!header.sort) {
+      header.sort = 'asc';
+    } else {
+      header.sort = header.sort === 'asc' ? 'desc' : 'asc';
+    }
+  
+    // Sort the data based on the header's key and sort state
+    let data = document.data.map(d => ({ ...d }));
+    data = this.sortData(data, header.key, header.sort);
+
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      headers,
+      data
+    });
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
+  }
+  
+  sortData(data: ExpenseData[], key: string, sort?: ExpenseHeaderSort) {
+    if (!sort) {
+      return data; // No sorting applied when sort is undefined
+    }
+  
+    return data.sort((a, b) => {
+      const valueA = a[key];
+      const valueB = b[key];
+  
+      // Handle different types of data (e.g., strings, numbers, dates)
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        return sort === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      }
+  
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return sort === 'asc' ? valueA - valueB : valueB - valueA;
+      }
+  
+      if (valueA instanceof Timestamp && valueB instanceof Timestamp) {
+        return sort === 'asc'
+          ? valueA.toMillis() - valueB.toMillis()
+          : valueB.toMillis() - valueA.toMillis();
+      }
+  
+      // If data type is unknown or not comparable, leave it as is
+      return 0;
+    });
   }
 
   async addNewBill() {
@@ -274,16 +350,6 @@ export class ExpenseTrackerComponent {
   showConfirmRemoveAccessModal: WritableSignal<boolean> = signal(false);
   shareEmail = new FormControl('', [ Validators.required, Validators.email ]);
   newUserRole: WritableSignal<'viewer' | 'editor' | null> = signal(null);
-  private newUserRoleToAclKey = computed(() => {
-    const role = this.newUserRole();
-    if (role === 'viewer') {
-      return 'viewers';
-    } else if (role === 'editor') {
-      return 'editors';
-    }
-
-    return null;
-  });
   emailError: WritableSignal<string> = signal('');
   sendingShareRequest: WritableSignal<boolean> = signal(false);
   updatingUserAcl: WritableSignal<{ role: string, email: string } | null> = signal(null);
@@ -316,7 +382,7 @@ export class ExpenseTrackerComponent {
 
   async shareDocument() {
     const document = this.document();
-    const role = this.newUserRoleToAclKey();
+    const role = this.newUserRole() === 'viewer' ? 'viewers' : 'editors';
     const email = this.shareEmail.value;
 
     if (this.shareEmail.invalid || !document || !role || !email) {

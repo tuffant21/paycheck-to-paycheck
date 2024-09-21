@@ -1,10 +1,10 @@
-import { Component, computed, inject, OnInit, Signal, signal, WritableSignal } from '@angular/core';
-import { ExpenseService } from "../services/expense.service";
-import { Router, RouterLink } from "@angular/router";
 import { DatePipe, NgClass } from "@angular/common";
-import { ExpenseModel } from "../models/expense-model";
+import { Component, computed, inject, OnInit, Signal, signal, WritableSignal } from '@angular/core';
+import { Router, RouterLink } from "@angular/router";
 import { OrderByDirection, QueryDocumentSnapshot, QuerySnapshot, startAfter, startAt } from "firebase/firestore";
 import { ButtonComponent } from "../button/button.component";
+import { ExpenseModel } from "../models/expense-model";
+import { ExpenseService } from "../services/expense.service";
 
 @Component({
   selector: 'app-documents',

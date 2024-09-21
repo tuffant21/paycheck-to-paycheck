@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { ExpenseHeaderType } from '../../models/expense-model';
 
 @Component({
@@ -10,27 +10,12 @@ import { ExpenseHeaderType } from '../../models/expense-model';
   styleUrl: './input.component.scss'
 })
 export class InputComponent {
-  value = input.required<string | undefined>();
+  value = input.required<any | undefined>();
   clazz = input<string>('');
   disabled = input(false);
   type = input<ExpenseHeaderType>('text');
 
-  updated = output<string>();
-
-  classForType = computed(() => {
-    if (this.type() === 'checkbox') {
-      return 'accent-blue-500';
-    }
-
-    return 'rounded w-full pl-1 pr-1 disabled:cursor-text disabled:bg-transparent enabled:hover:outline enabled:hover:outline-gray-300';
-  });
-
-  allClasses = computed(() => {
-    return [
-      this.clazz(),
-      this.classForType()
-    ].join(' ');
-  });
+  updated = output<any>();
 
   selectText(event: Event): void {
     (<HTMLInputElement>event.target).select();
@@ -44,8 +29,10 @@ export class InputComponent {
       target.blur();
     }
 
-    if (!target.value || target.value === currentValue) return;
+    const value = this.type() === 'checkbox' ? target.checked : target.value;
 
-    this.updated.emit(target.value);
+    if (value === currentValue) return;
+
+    this.updated.emit(value);
   }
 }

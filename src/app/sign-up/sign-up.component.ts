@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { AuthSharedComponent } from "../auth-shared/auth-shared.component";
 import { Auth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { AuthSharedComponent } from "../auth-shared/auth-shared.component";
 
 @Component({
   selector: 'app-sign-up',

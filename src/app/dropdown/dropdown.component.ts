@@ -1,5 +1,5 @@
-import { Component, ElementRef, HostListener, inject, input, OnDestroy, output, Renderer2, signal, ViewChild } from '@angular/core';
 import { DOCUMENT, NgClass, TitleCasePipe } from '@angular/common';
+import { Component, ElementRef, HostListener, inject, input, OnDestroy, output, Renderer2, signal, ViewChild } from '@angular/core';
 import { ButtonComponent } from '../button/button.component';
 
 @Component({

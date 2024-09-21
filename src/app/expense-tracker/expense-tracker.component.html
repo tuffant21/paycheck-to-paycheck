@@ -19,103 +19,38 @@
   </div>
 
   <!-- Bill Table -->
-  <div class="overflow-x-auto">
-    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          @for (header of document()?.headers ?? []; track header.key) {
-          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer"
-            (click)="sortTable(header.key)">
-            {{ header.display }}
-            @if (sortBy === header.key) {
-            <span>{{ sortDirection === 'asc' ? '▲' : sortDirection === 'desc' ? '▼' : '' }}</span>
-            }
-          </th>
-          }
-          @if (isOwner() || isEditor()) {
-          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Actions</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (bill of document()?.data ?? []; track bill) {
-        @if (!bill.__disabled) {
-        <tr>
-          @for (header of document()?.headers ?? []; track header.key) {
-          <td class="px-4 py-2 border-t border-gray-200">
-            <app-input
-              [value]="bill[header.key]"
-              [disabled]="isViewer()"
-              [type]="header.type"
-            ></app-input>
-          </td>
-          }
-          @if (isOwner() || isEditor()) {
-          <td class="px-4 py-2 border-t border-gray-200">
-            <app-button text="Disable" color="gray" padding="sm" (click)="disableBill(bill)"></app-button>
-
-            <app-button text="Delete" color="gray" padding="sm" (click)="openDeleteBillModal(bill)"></app-button>
-          </td>
-          }
-        </tr>
-        }
-        }
-      </tbody>
-    </table>
-  </div>
+  <app-bill-table
+    [headers]="headers()"
+    [data]="enabledBills()"
+    [isOwner]="isOwner()"
+    [isEditor]="isEditor()"
+    [isViewer]="isViewer()"
+    (sortTable)="sortTable($event)"
+    (disableBill)="disableBill($event)"
+    (openDeleteBillModal)="openDeleteBillModal($event)"
+    (valueUpdate)="saveCell($event)"
+  ></app-bill-table>
 
   <!-- Add New Bill Button -->
   @if (isOwner() || isEditor()) {
-  <div class="mt-4">
+  <div class="mt-4 mb-10">
     <app-button text="Add New Bill" color="blue" (click)="addNewBill()"></app-button>
   </div>
   }
 
   <!-- Disabled Bills -->
-  <h2 class="text-2xl font-bold text-gray-800 mt-10 mb-6">Disabled Bills</h2>
-  <div class="overflow-x-auto">
-    <table class="min-w-full bg-white shadow-md rounded border border-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          @for (header of document()?.headers ?? []; track header.key) {
-          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer"
-            (click)="sortTable(header?.key)">
-            {{ header.display }}
-            @if (sortBy === header.key) {
-            <span>{{ sortDirection === 'asc' ? '▲' : sortDirection === 'desc' ? '▼' : '' }}</span>
-            }
-          </th>
-          }
-          @if (isOwner() || isEditor()) {
-          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Actions</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (bill of document()?.data ?? []; track bill) {
-        @if (bill?.__disabled) {
-        <tr>
-          @for (header of document()?.headers ?? []; track header) {
-          <td class="px-4 py-2 border-t border-gray-200">
-            <app-input
-              [value]="bill[header.key]"
-              [disabled]="isViewer()"
-              [type]="header.type"
-            ></app-input>
-          </td>
-          }
-          @if (isOwner() || isEditor()) {
-          <td class="px-4 py-2 border-t border-gray-200">
-            <app-button text="Enable" color="gray" padding="sm" (click)="enableBill(bill)"></app-button>
-            <app-button text="Delete" color="gray" padding="sm" (click)="openDeleteBillModal(bill)"></app-button>
-          </td>
-          }
-        </tr>
-        }
-        }
-      </tbody>
-    </table>
-  </div>
+  <app-bill-table
+    [headers]="headers()"
+    [data]="disabledBills()"
+    [isOwner]="isOwner()"
+    [isEditor]="isEditor()"
+    [isViewer]="isViewer()"
+    (sortTable)="sortTable($event)"
+    (disableBill)="disableBill($event)"
+    (openDeleteBillModal)="openDeleteBillModal($event)"
+    (valueUpdate)="saveCell($event)"
+  ></app-bill-table>
+  <div class="mb-6"></div>
 
   <!-- Delete Bill Modal -->
   @if (isOwner() || isEditor()) {

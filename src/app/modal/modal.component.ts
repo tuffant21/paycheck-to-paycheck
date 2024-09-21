@@ -1,5 +1,5 @@
-import { Component, HostListener, input, output } from '@angular/core';
 import { NgClass, TitleCasePipe } from "@angular/common";
+import { Component, HostListener, input, output } from '@angular/core';
 import { ButtonComponent } from "../button/button.component";
 
 @Component({

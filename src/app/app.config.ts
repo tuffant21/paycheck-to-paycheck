@@ -6,7 +6,6 @@ import { provideFirebaseApp } from "./providers/firebase-app.provider";
 import { provideFirebaseAuth } from "./providers/firebase-auth.provider";
 import { provideFirebaseFirestore } from "./providers/firebase-firestore.provider";
 
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({eventCoalescing: true}),

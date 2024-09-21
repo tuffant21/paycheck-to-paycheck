@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
 import { CanMatchFn, Route, Router, UrlSegment } from '@angular/router';
-import { collection, doc, DocumentSnapshot, getDoc } from "firebase/firestore";
-import { FIREBASE_FIRESTORE } from "../providers/firebase-firestore.provider";
-import { combineLatest, from, Observable, of, switchMap } from "rxjs";
-import { getUser$ } from "../services/user.service";
-import { ExpenseModel } from "../models/expense-model";
 import { User } from "firebase/auth";
+import { collection, doc, DocumentSnapshot, getDoc } from "firebase/firestore";
+import { combineLatest, from, Observable, of, switchMap } from "rxjs";
+import { ExpenseModel } from "../models/expense-model";
+import { FIREBASE_FIRESTORE } from "../providers/firebase-firestore.provider";
+import { getUser$ } from "../services/user.service";
 
 export const expenseTrackerGuard: CanMatchFn = (route: Route, segments: UrlSegment[]): Observable<boolean> => {
   const router = inject(Router);

@@ -1,11 +1,11 @@
-import { Component, inject, signal, Signal, WritableSignal } from '@angular/core';
-import { Router } from "@angular/router";
-import { toSignal } from "@angular/core/rxjs-interop";
 import { NgClass } from "@angular/common";
+import { Component, inject, signal, Signal, WritableSignal } from '@angular/core';
+import { toSignal } from "@angular/core/rxjs-interop";
+import { Router } from "@angular/router";
 import { Auth, signOut, User } from "firebase/auth";
+import { ButtonComponent } from "../button/button.component";
 import { FIREBASE_AUTH } from "../providers/firebase-auth.provider";
 import { getUser$ } from "../services/user.service";
-import { ButtonComponent } from "../button/button.component";
 
 @Component({
   selector: 'app-header',

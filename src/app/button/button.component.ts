@@ -1,5 +1,5 @@
-import { Component, computed, input } from '@angular/core';
 import { NgClass, NgOptimizedImage, TitleCasePipe } from "@angular/common";
+import { Component, computed, input } from '@angular/core';
 import { ButtonIcon } from "./icons/icons";
 import { IconsComponent } from "./icons/icons.component";
 

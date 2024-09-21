@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Auth, onAuthStateChanged, User } from "firebase/auth";
-import { FIREBASE_AUTH } from "../providers/firebase-auth.provider";
 import { Observable } from "rxjs";
+import { FIREBASE_AUTH } from "../providers/firebase-auth.provider";
 
 export const getUser$: () => Observable<User | null> = () => {
   const auth: Auth = inject(FIREBASE_AUTH);

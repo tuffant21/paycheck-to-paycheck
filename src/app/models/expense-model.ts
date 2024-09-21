@@ -1,8 +1,17 @@
 import { Timestamp } from "firebase/firestore";
 
 export type ExpenseHeaderType = 'text' | 'checkbox' | 'number' | 'date';
-export type ExpenseHeader = { key: string, type: ExpenseHeaderType, display: string };
-export type ExpenseData = { [key: string]: any, __disabled: boolean };
+export type ExpenseHeaderSort = 'asc' | 'desc';
+export type ExpenseHeader = { 
+  key: string,
+  type: ExpenseHeaderType,
+  display: string,
+  sort?: ExpenseHeaderSort
+};
+export type ExpenseData = {
+  [key: string]: any,
+  __disabled: boolean
+};
 
 export type ExpenseModel<DATE_TYPE = Timestamp> = {
   id: string;
