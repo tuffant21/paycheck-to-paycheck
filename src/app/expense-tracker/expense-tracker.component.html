@@ -1,16 +1,19 @@
 <div class="w-screen mx-auto mt-10 p-6 bg-white shadow-md rounded">
   <!-- Document Title and Manage Button -->
-  <div class="flex justify-between items-center mb-6">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
     <!-- Document Title -->
-    <app-input clazz="text-2xl font-bold text-gray-800" [value]="document()?.title" [disabled]="isViewer()"
-      (updated)="saveTitle($event)"></app-input>
+    <div class="w-full">
+      <app-input clazz="w-full text-2xl font-bold text-gray-800 mb-4 md:mb-0" [value]="document()?.title"
+        [disabled]="isViewer()" (updated)="saveTitle($event)">
+      </app-input>
+    </div>
 
     <!-- Manage Document Dropdown -->
     @if (isOwner() || isEditor()) {
-    <div class="relative inline-block text-left">
-      <app-dropdown label="Manage Document" [actions]="getManageDocumentActions()"
-        (dropdownItemClicked)="handleManageDocumentActions($event)"></app-dropdown>
-    </div>
+    <app-dropdown label="Manage Document" [actions]="getManageDocumentActions()"
+      (dropdownItemClicked)="handleManageDocumentActions($event)">
+    </app-dropdown>
+
     <input #fileImportInput type="file" id="fileInput" accept=".json" class="hidden"
       (change)="importDocument($event)" />
     }
