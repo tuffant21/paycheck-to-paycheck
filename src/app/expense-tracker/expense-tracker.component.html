@@ -3,7 +3,7 @@
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
     <!-- Document Title -->
     <div class="w-full">
-      <app-input clazz="w-full text-2xl font-bold text-gray-800 mb-4 md:mb-0" [value]="document()?.title"
+      <app-input clazz="w-full text-2xl font-bold text-gray-800 mb-4 mr-0 md:mr-4 md:mb-0" [value]="document()?.title"
         [disabled]="isViewer()" (updated)="saveTitle($event)">
       </app-input>
     </div>
