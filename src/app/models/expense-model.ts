@@ -27,3 +27,48 @@ export type ExpenseModel<DATE_TYPE = Timestamp> = {
     viewers: string[];
   };
 }
+
+// Helper function to check if an object matches the expected structure
+export function isExpenseJson(json: any): json is { headers: ExpenseHeader[], data: ExpenseData[] } {
+  if (
+    typeof json !== 'object' || 
+    !json.hasOwnProperty('headers') || 
+    !json.hasOwnProperty('data')
+  ) {
+    return false;
+  }
+
+  const { headers, data } = json;
+
+  // Validate that headers is an array and each item matches ExpenseHeader
+  if (!Array.isArray(headers) || !headers.every(isExpenseHeader)) {
+    return false;
+  }
+
+  // Validate that data is an array and each item matches ExpenseData
+  if (!Array.isArray(data) || !data.every(isExpenseData)) {
+    return false;
+  }
+
+  return true;
+}
+
+// Helper function to validate if an item is a valid ExpenseHeader
+function isExpenseHeader(item: any): item is ExpenseHeader {
+  return (
+    typeof item === 'object' &&
+    typeof item.key === 'string' &&
+    ['text', 'checkbox', 'number', 'date'].includes(item.type) &&
+    typeof item.display === 'string' &&
+    (item.sort === undefined || ['asc', 'desc'].includes(item.sort))
+  );
+}
+
+// Helper function to validate if an item is a valid ExpenseData
+function isExpenseData(item: any): item is ExpenseData {
+  return (
+    typeof item === 'object' &&
+    typeof item.__id === 'string' &&
+    typeof item.__disabled === 'boolean'
+  );
+}

@@ -2,12 +2,8 @@
   <!-- Document Title and Manage Button -->
   <div class="flex justify-between items-center mb-6">
     <!-- Document Title -->
-    <app-input
-      clazz="text-2xl font-bold text-gray-800"
-      [value]="document()?.title"
-      [disabled]="isViewer()"
-      (updated)="saveTitle($event)"
-    ></app-input>
+    <app-input clazz="text-2xl font-bold text-gray-800" [value]="document()?.title" [disabled]="isViewer()"
+      (updated)="saveTitle($event)"></app-input>
 
     <!-- Manage Document Dropdown -->
     @if (isOwner() || isEditor()) {
@@ -15,21 +11,15 @@
       <app-dropdown label="Manage Document" [actions]="getManageDocumentActions()"
         (dropdownItemClicked)="handleManageDocumentActions($event)"></app-dropdown>
     </div>
+    <input #fileImportInput type="file" id="fileInput" accept=".json" class="hidden"
+      (change)="importDocument($event)" />
     }
   </div>
 
   <!-- Bill Table -->
-  <app-bill-table
-    [headers]="headers()"
-    [data]="enabledBills()"
-    [isOwner]="isOwner()"
-    [isEditor]="isEditor()"
-    [isViewer]="isViewer()"
-    (sortTable)="sortTable($event)"
-    (toggleDisabled)="toggleDisabled($event)"
-    (openDeleteBillModal)="openDeleteBillModal($event)"
-    (valueUpdate)="saveCell($event)"
-  ></app-bill-table>
+  <app-bill-table [headers]="headers()" [data]="enabledBills()" [isOwner]="isOwner()" [isEditor]="isEditor()"
+    [isViewer]="isViewer()" (sortTable)="sortTable($event)" (toggleDisabled)="toggleDisabled($event)"
+    (openDeleteBillModal)="openDeleteBillModal($event)" (valueUpdate)="saveCell($event)"></app-bill-table>
 
   <!-- Add New Bill Button -->
   @if (isOwner() || isEditor()) {
@@ -39,52 +29,30 @@
   }
 
   <!-- Disabled Bills -->
-  <app-bill-table
-    [headers]="headers()"
-    [data]="disabledBills()"
-    [isOwner]="isOwner()"
-    [isEditor]="isEditor()"
-    [isViewer]="isViewer()"
-    (sortTable)="sortTable($event)"
-    (toggleDisabled)="toggleDisabled($event)"
-    (openDeleteBillModal)="openDeleteBillModal($event)"
-    (valueUpdate)="saveCell($event)"
-  ></app-bill-table>
+  <app-bill-table [headers]="headers()" [data]="disabledBills()" [isOwner]="isOwner()" [isEditor]="isEditor()"
+    [isViewer]="isViewer()" (sortTable)="sortTable($event)" (toggleDisabled)="toggleDisabled($event)"
+    (openDeleteBillModal)="openDeleteBillModal($event)" (valueUpdate)="saveCell($event)"></app-bill-table>
   <div class="mb-6"></div>
 
   <!-- Delete Bill Modal -->
   @if (isOwner() || isEditor()) {
-    <app-modal
-      [visible]="pendingDeleteBill() !== null"
-      [disabled]="deletingBill()"
-      [loading]="deletingBill()"
-      title="Delete Bill"
-      confirmText="delete"
-      closeText="cancel"
-      (confirmAction)="confirmDeleteBill()"
-      (closeAction)="closeDeleteBillModal()"
-    >
-      <p class="text-gray-600 mb-4">Are you sure you want to delete this bill?</p>
-      @for (item of pendingDeleteBill() | keyvalue; track item.key) {
-        @if (item.key !== '__disabled') {
-          <p class="pl-4 mb-1">{{ getHeaderForBillKey(item.key) }}: {{ item.value || '""' }}</p>
-        }
-      }
-    </app-modal>
+  <app-modal [visible]="pendingDeleteBill() !== null" [disabled]="deletingBill()" [loading]="deletingBill()"
+    title="Delete Bill" confirmText="delete" closeText="cancel" (confirmAction)="confirmDeleteBill()"
+    (closeAction)="closeDeleteBillModal()">
+    <p class="text-gray-600 mb-4">Are you sure you want to delete this bill?</p>
+    @for (item of pendingDeleteBill() | keyvalue; track item.key) {
+    @if (item.key !== '__disabled') {
+    <p class="pl-4 mb-1">{{ getHeaderForBillKey(item.key) }}: {{ item.value || '""' }}</p>
+    }
+    }
+  </app-modal>
   }
 
   <!-- Delete Document Modal -->
   @if (isOwner()) {
-  <app-modal
-    [visible]="showDeleteDocumentModal()"
-    [disabled]="deletingDocument()"
-    [loading]="deletingDocument()"
-    title="Delete Document"
-    confirmText="delete"
-    closeText="cancel"
-    (confirmAction)="deleteDocument()"
-    (closeAction)="closeDeleteDocumentModal()"
-  >
+  <app-modal [visible]="showDeleteDocumentModal()" [disabled]="deletingDocument()" [loading]="deletingDocument()"
+    title="Delete Document" confirmText="delete" closeText="cancel" (confirmAction)="deleteDocument()"
+    (closeAction)="closeDeleteDocumentModal()">
     <p class="text-gray-600">Are you sure you want to delete this document? This action cannot be undone.</p>
   </app-modal>
   }
@@ -118,8 +86,7 @@
       <div class="flex justify-end mb-4">
         <app-button text="Add" type="submit" color="green" clazz="px-10"
           [disabled]="shareEmail.invalid || newUserRole() === null || sendingShareRequest()"
-          [loading]="sendingShareRequest()"
-        ></app-button>
+          [loading]="sendingShareRequest()"></app-button>
       </div>
     </form>
 
@@ -130,12 +97,8 @@
       <li class="flex items-center justify-between hover:bg-gray-100">
         <span class="ml-4 mr-4">{{ acl.email }}</span>
         <div class="flex items-center">
-          <app-dropdown
-            [label]="acl.role"
-            [actions]="getAclActions(acl)"
-            [loading]="updatingUserAcl() === acl"
-            [disabled]="updatingUserAcl() !== null"
-            (dropdownItemClicked)="handleUpdateAcl($event, acl)"></app-dropdown>
+          <app-dropdown [label]="acl.role" [actions]="getAclActions(acl)" [loading]="updatingUserAcl() === acl"
+            [disabled]="updatingUserAcl() !== null" (dropdownItemClicked)="handleUpdateAcl($event, acl)"></app-dropdown>
         </div>
       </li>
       } @empty {

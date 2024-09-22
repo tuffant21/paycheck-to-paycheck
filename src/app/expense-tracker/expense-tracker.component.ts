@@ -1,5 +1,5 @@
 import { DecimalPipe, KeyValuePipe, TitleCasePipe } from "@angular/common";
-import { Component, computed, inject, signal, Signal, WritableSignal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -8,7 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import { ButtonComponent } from "../button/button.component";
 import { DropdownComponent } from "../dropdown/dropdown.component";
 import { ModalComponent } from "../modal/modal.component";
-import { ExpenseData, ExpenseHeader, ExpenseHeaderSort, ExpenseModel } from "../models/expense-model";
+import { ExpenseData, ExpenseHeader, ExpenseHeaderSort, ExpenseModel, isExpenseJson } from "../models/expense-model";
 import { ExpenseService } from "../services/expense.service";
 import { getUser$ } from "../services/user.service";
 import { BillTableComponent } from "./bill-table/bill-table.component";
@@ -90,9 +90,13 @@ export class ExpenseTrackerComponent {
   });
 
   // Manage Document Dropdown
+  @ViewChild('fileImportInput') fileImportInput!: ElementRef;
+
   getManageDocumentActions() {
     const actions = [
-      { id: 'share', label: 'Share Document' }
+      { id: 'share', label: 'Share Document' },
+      { id: 'export', label: 'Export Document' },
+      { id: 'import', label: 'Import Document' }
     ];
 
     return this.isOwner()
@@ -100,9 +104,75 @@ export class ExpenseTrackerComponent {
       : actions;
   }
 
+  private exportDocument() {
+    const toExport: Partial<ExpenseModel> = {
+      headers: this.document()?.headers,
+      data: this.document()?.data
+    };
+
+    const jsonContent = JSON.stringify(toExport, null, 2);
+
+    // Create a Blob object for the JSON file
+    const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+    
+    // Create a download link
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'exported_data.json');
+    link.style.visibility = 'hidden';
+    
+    // Append link to the body and trigger click
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  importDocument(event: Event) {
+    const document = this.document();
+    const inputElement = event.target as HTMLInputElement;
+    const file = inputElement.files?.[0];
+
+    if (file && document) {
+        const reader = new FileReader();
+
+        reader.onload = async (e: ProgressEvent<FileReader>) => {
+            if (e.target?.result) {
+              try {
+                const jsonContent = JSON.parse(e.target.result as string);
+
+                if (isExpenseJson(jsonContent)) {
+                  const resp = await this.expenseService.updateDocument({
+                    ...document,
+                    ...jsonContent
+                  });
+              
+                  if (!resp.success) {
+                    window.alert(resp.error);
+                  }
+                } else {
+                  window.alert('Sorry, there was an error opening your input file.');
+                }
+              } catch(err) {
+                window.alert('Sorry, there was an error opening your input file.');
+              }
+            }
+
+            // reset value to empty for change to trigger again later
+            inputElement.value = '';
+        };
+
+        reader.readAsText(file);
+    }
+  }
+
   handleManageDocumentActions(eventId: string) {
     if (eventId === 'share') {
       this.openShareModal();
+    } else if (eventId === 'export') {
+      this.exportDocument()
+    } else if (eventId === 'import') {
+      this.fileImportInput.nativeElement.click();
     } else if (eventId === 'delete') {
       this.openDeleteDocumentModal();
     }
