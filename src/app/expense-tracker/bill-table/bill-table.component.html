@@ -3,7 +3,7 @@
     <thead class="bg-gray-50">
       <tr>
         @for (header of headers(); track header.key) {
-        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer"
+        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600 cursor-pointer whitespace-nowrap"
           (click)="sortTable.emit(header.key)">
           {{ header.display }}
           @if (header.sort) {
@@ -20,14 +20,14 @@
       @for (bill of data(); track bill.__id) {
       <tr>
         @for (header of headers(); track header.key) {
-        <td class="px-4 py-2 border-t border-gray-200">
+        <td class="pl-4 border-t border-gray-200">
           <app-input [value]="bill[header.key]" [disabled]="isViewer()" [type]="header.type"
             (updated)="valueUpdated(bill, header.key, $event)"></app-input>
         </td>
         }
         @if (isOwner() || isEditor()) {
-        <td class="px-4 py-2 border-t border-gray-200">
-          <app-button [text]="bill.__disabled ? 'Enable' : 'Disable'" color="gray" padding="sm"
+        <td class="px-4 py-2 border-t border-gray-200 whitespace-nowrap">
+          <app-button [text]="bill.__disabled ? 'Enable' : 'Disable'" color="gray" padding="sm" clazz="mr-2"
             (click)="toggleDisabled.emit(bill)"></app-button>
 
           <app-button text="Delete" color="gray" padding="sm" (click)="openDeleteBillModal.emit(bill)"></app-button>
