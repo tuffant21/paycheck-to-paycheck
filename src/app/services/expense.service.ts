@@ -16,10 +16,11 @@ import {
   QueryNonFilterConstraint,
   QuerySnapshot,
   setDoc,
+  Timestamp,
   where
 } from 'firebase/firestore';
 import { Observable } from "rxjs";
-import { ExpenseModel } from "../models/expense-model";
+import { ExpenseData, ExpenseHeaderSort, ExpenseModel } from "../models/expense-model";
 import { FIREBASE_FIRESTORE } from "../providers/firebase-firestore.provider";
 import { RestResult } from './result.type';
 import { getUser$ } from "./user.service";
@@ -137,14 +138,51 @@ export class ExpenseService {
       };
     }
   }
+  
+  private sortData(data: ExpenseData[], key: string, sort?: ExpenseHeaderSort) {
+    if (!sort) {
+      return data; // No sorting applied when sort is undefined
+    }
+  
+    return data.sort((a, b) => {
+      const valueA = a[key];
+      const valueB = b[key];
+  
+      // Handle different types of data (e.g., strings, numbers, dates)
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        return sort === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      }
+  
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return sort === 'asc' ? valueA - valueB : valueB - valueA;
+      }
+  
+      if (valueA instanceof Timestamp && valueB instanceof Timestamp) {
+        return sort === 'asc'
+          ? valueA.toMillis() - valueB.toMillis()
+          : valueB.toMillis() - valueA.toMillis();
+      }
+  
+      // If data type is unknown or not comparable, leave it as is
+      return 0;
+    });
+  }
 
   async updateDocument(document: ExpenseModel): RestResult {
     const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
     const docRef = doc(expenseCollectionRef, document.id);
 
+    const header = document.headers.find(h => h.sort);
+    if (!header) {
+      return { success: false, error: 'Document did not contain a sorted header and could not be saved' };
+    }
+
+    const data = this.sortData(document.data.map(d => ({ ...d })), header.key, header.sort);
+
     try {
       await setDoc(docRef, {
         ...document,
+        data,
         modified: new Date()
       }, {merge: true});
 

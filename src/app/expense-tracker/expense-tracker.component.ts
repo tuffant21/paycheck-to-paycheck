@@ -256,49 +256,15 @@ export class ExpenseTrackerComponent {
     } else {
       header.sort = header.sort === 'asc' ? 'desc' : 'asc';
     }
-  
-    // Sort the data based on the header's key and sort state
-    let data = document.data.map(d => ({ ...d }));
-    data = this.sortData(data, header.key, header.sort);
-
+    
     const resp = await this.expenseService.updateDocument({
       ...document,
-      headers,
-      data
+      headers
     });
 
     if (!resp.success) {
       window.alert(resp.error);
     }
-  }
-  
-  sortData(data: ExpenseData[], key: string, sort?: ExpenseHeaderSort) {
-    if (!sort) {
-      return data; // No sorting applied when sort is undefined
-    }
-  
-    return data.sort((a, b) => {
-      const valueA = a[key];
-      const valueB = b[key];
-  
-      // Handle different types of data (e.g., strings, numbers, dates)
-      if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sort === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
-      }
-  
-      if (typeof valueA === 'number' && typeof valueB === 'number') {
-        return sort === 'asc' ? valueA - valueB : valueB - valueA;
-      }
-  
-      if (valueA instanceof Timestamp && valueB instanceof Timestamp) {
-        return sort === 'asc'
-          ? valueA.toMillis() - valueB.toMillis()
-          : valueB.toMillis() - valueA.toMillis();
-      }
-  
-      // If data type is unknown or not comparable, leave it as is
-      return 0;
-    });
   }
 
   async addNewBill() {

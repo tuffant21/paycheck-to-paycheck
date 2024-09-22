@@ -20,6 +20,7 @@
         [disabled]="disabled()"
         (focus)="selectText($event)"
         (blur)="update($event, false)"
+        (change)="update($event, true)"
         (keyup.enter)="update($event, true)"
         (keyup.escape)="update($event, true)"
     />
