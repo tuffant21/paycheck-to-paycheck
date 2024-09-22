@@ -91,16 +91,20 @@ export class ExpenseTrackerComponent {
 
   // Manage Document Dropdown
   getManageDocumentActions() {
+    const actions = [
+      { id: 'share', label: 'Share Document' }
+    ];
+
     return this.isOwner()
-      ? [{ id: 'share', label: 'Share Document' }, { id: 'delete', label: 'Delete Document' }]
-      : [{ id: 'share', label: 'Share Document' }];
+      ? [...actions, { id: 'delete', label: 'Delete Document' }]
+      : actions;
   }
 
   handleManageDocumentActions(eventId: string) {
-    if (this.isOwner() && eventId === 'delete') {
-      this.openDeleteDocumentModal();
-    } else if (this.isOwner() || this.isEditor() && eventId === 'share') {
+    if (eventId === 'share') {
       this.openShareModal();
+    } else if (eventId === 'delete') {
+      this.openDeleteDocumentModal();
     }
   }
 
