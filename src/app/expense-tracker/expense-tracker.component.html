@@ -26,13 +26,16 @@
 
   <!-- Add New Bill Button -->
   @if (isOwner() || isEditor()) {
-  <div class="mt-4 mb-10">
+  <div class="mt-4">
     <app-button text="Add New Bill" color="blue" (click)="addNewBill()" [disabled]="addingNewBill()"
       [loading]="addingNewBill()"></app-button>
   </div>
   }
 
   <!-- Disabled Bills -->
+  <div class="mt-10 mb-4">
+    <p class="text-xl font-bold">Disabled Bills</p>
+  </div>
   <app-bill-table [headers]="headers()" [data]="disabledBills()" [isOwner]="isOwner()" [isEditor]="isEditor()"
     [isViewer]="isViewer()" (sortTable)="sortTable($event)" (toggleDisabled)="toggleDisabled($event)"
     (openDeleteBillModal)="openDeleteBillModal($event)" (valueUpdate)="saveCell($event)"></app-bill-table>
