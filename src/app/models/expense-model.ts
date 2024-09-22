@@ -33,12 +33,13 @@ export function isExpenseJson(json: any): json is { headers: ExpenseHeader[], da
   if (
     typeof json !== 'object' || 
     !json.hasOwnProperty('headers') || 
-    !json.hasOwnProperty('data')
+    !json.hasOwnProperty('data') ||
+    !json.hasOwnProperty('title')
   ) {
     return false;
   }
 
-  const { headers, data } = json;
+  const { headers, data, title } = json;
 
   // Validate that headers is an array and each item matches ExpenseHeader
   if (!Array.isArray(headers) || !headers.every(isExpenseHeader)) {
@@ -47,6 +48,11 @@ export function isExpenseJson(json: any): json is { headers: ExpenseHeader[], da
 
   // Validate that data is an array and each item matches ExpenseData
   if (!Array.isArray(data) || !data.every(isExpenseData)) {
+    return false;
+  }
+
+  // Validate that title is a string
+  if (typeof title !== 'string') {
     return false;
   }
 

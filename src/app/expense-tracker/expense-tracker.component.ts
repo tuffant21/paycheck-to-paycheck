@@ -107,7 +107,8 @@ export class ExpenseTrackerComponent {
   private exportDocument() {
     const toExport: Partial<ExpenseModel> = {
       headers: this.document()?.headers,
-      data: this.document()?.data
+      data: this.document()?.data,
+      title: this.document()?.title
     };
 
     const jsonContent = JSON.stringify(toExport, null, 2);
@@ -149,6 +150,7 @@ export class ExpenseTrackerComponent {
       }
   
       try {
+        this.importingFile.set(true);
         const jsonContent = JSON.parse(result as string);
   
         // Validate JSON structure
@@ -168,6 +170,9 @@ export class ExpenseTrackerComponent {
         }
       } catch (err) {
         return window.alert('Sorry, there was an error opening your input file.');
+      } finally {
+        this.importingFile.set(false);
+        this.closeImportModal();
       }
   
       // Reset the file input to allow re-triggering the change event later
@@ -183,7 +188,7 @@ export class ExpenseTrackerComponent {
     } else if (eventId === 'export') {
       this.exportDocument()
     } else if (eventId === 'import') {
-      this.fileImportInput.nativeElement.click();
+      this.openImportModal();
     } else if (eventId === 'delete') {
       this.openDeleteDocumentModal();
     }
@@ -522,5 +527,21 @@ export class ExpenseTrackerComponent {
   cancelRemoveAccess() {
     this.showConfirmRemoveAccessModal.set(false);
     this.pendingRemoveAccess.set(null);
+  }
+
+  // Import Modal
+  showImportModal: WritableSignal<boolean> = signal(false);
+  importingFile: WritableSignal<boolean> = signal(false);
+
+  openImportModal() {
+    this.showImportModal.set(true);
+  }
+
+  importModalConfirmAction() {
+    this.fileImportInput.nativeElement.click();
+  }
+
+  closeImportModal() {
+    this.showImportModal.set(false);
   }
 }

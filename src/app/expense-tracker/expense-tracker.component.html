@@ -57,7 +57,7 @@
   </app-modal>
   }
 
-  <!-- Share Document Modal -->
+  <!-- Share Document / Import Modal -->
   @if (isOwner() || isEditor()) {
   <app-modal [visible]="showShareModal()" title="Manage Sharing" closeText="done" (closeAction)="closeShareModal()">
     <!-- Add new user -->
@@ -111,6 +111,12 @@
   <app-modal [visible]="showConfirmRemoveAccessModal()" title="Remove Access" confirmText="remove" closeText="cancel"
     (confirmAction)="confirmRemoveAccess()" (closeAction)="cancelRemoveAccess()">
     <p class="text-gray-600">Are you sure you want to remove access for {{ pendingRemoveAccess()?.email }}?</p>
+  </app-modal>
+
+  <app-modal [visible]="showImportModal()" [disabled]="importingFile()" [loading]="importingFile()" title="Import File"
+    confirmText="Import" closeText="cancel" (confirmAction)="importModalConfirmAction()"
+    (closeAction)="closeImportModal()">
+    <p class="text-gray-600">Are you sure you want to import a document? This action will overwrite all existing data.</p>
   </app-modal>
   }
 </div>
