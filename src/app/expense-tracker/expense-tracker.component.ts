@@ -129,41 +129,52 @@ export class ExpenseTrackerComponent {
   }
 
   importDocument(event: Event) {
-    const document = this.document();
     const inputElement = event.target as HTMLInputElement;
     const file = inputElement.files?.[0];
-
-    if (file && document) {
-        const reader = new FileReader();
-
-        reader.onload = async (e: ProgressEvent<FileReader>) => {
-            if (e.target?.result) {
-              try {
-                const jsonContent = JSON.parse(e.target.result as string);
-
-                if (isExpenseJson(jsonContent)) {
-                  const resp = await this.expenseService.updateDocument({
-                    ...document,
-                    ...jsonContent
-                  });
-              
-                  if (!resp.success) {
-                    window.alert(resp.error);
-                  }
-                } else {
-                  window.alert('Sorry, there was an error opening your input file.');
-                }
-              } catch(err) {
-                window.alert('Sorry, there was an error opening your input file.');
-              }
-            }
-
-            // reset value to empty for change to trigger again later
-            inputElement.value = '';
-        };
-
-        reader.readAsText(file);
+    const document = this.document();
+  
+    // Early return if file or document is not present
+    if (!file || !document) {
+      return;
     }
+  
+    const reader = new FileReader();
+  
+    reader.onload = async (e: ProgressEvent<FileReader>) => {
+      const result = e.target?.result;
+  
+      // Early return if no result from reader
+      if (!result) {
+        return window.alert('Sorry, there was an error opening your input file.');
+      }
+  
+      try {
+        const jsonContent = JSON.parse(result as string);
+  
+        // Validate JSON structure
+        if (!isExpenseJson(jsonContent)) {
+          return window.alert('Sorry, there was an error opening your input file.');
+        }
+  
+        // Update document with JSON content
+        const resp = await this.expenseService.updateDocument({
+          ...document,
+          ...jsonContent,
+        });
+  
+        // Handle response
+        if (!resp.success) {
+          return window.alert(resp.error);
+        }
+      } catch (err) {
+        return window.alert('Sorry, there was an error opening your input file.');
+      }
+  
+      // Reset the file input to allow re-triggering the change event later
+      inputElement.value = '';
+    };
+  
+    reader.readAsText(file);
   }
 
   handleManageDocumentActions(eventId: string) {
