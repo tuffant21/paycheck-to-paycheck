@@ -20,7 +20,7 @@ import {
   where
 } from 'firebase/firestore';
 import { Observable } from "rxjs";
-import { ExpenseData, ExpenseHeaderSort, ExpenseModel } from "../models/expense-model";
+import { ExpenseData, ExpenseHeader, ExpenseHeaderSort, ExpenseHeaderType, ExpenseModel } from "../models/expense-model";
 import { FIREBASE_FIRESTORE } from "../providers/firebase-firestore.provider";
 import { RestResult } from './result.type';
 import { getUser$ } from "./user.service";
@@ -139,26 +139,26 @@ export class ExpenseService {
     }
   }
   
-  private sortData(data: ExpenseData[], key: string, sort?: ExpenseHeaderSort) {
-    if (!sort) {
-      return data; // No sorting applied when sort is undefined
-    }
-  
+  private sortData(header: Required<ExpenseHeader>, data: ExpenseData[]) {
     return data.sort((a, b) => {
-      const valueA = a[key];
-      const valueB = b[key];
+      const valueA = a[header.key];
+      const valueB = b[header.key];
   
       // Handle different types of data (e.g., strings, numbers, dates)
-      if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sort === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      if (header.type === 'text') {
+        return header.sort === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
       }
   
-      if (typeof valueA === 'number' && typeof valueB === 'number') {
-        return sort === 'asc' ? valueA - valueB : valueB - valueA;
+      if (header.type === 'number') {
+        return header.sort === 'asc' ? valueA - valueB : valueB - valueA;
+      }
+
+      if (header.type === 'checkbox') {
+        return header.sort === 'asc' ? (valueA === valueB ? 0 : valueA ? 1 : -1) : (valueA === valueB ? 0 : valueB ? 1 : -1);
       }
   
-      if (valueA instanceof Timestamp && valueB instanceof Timestamp) {
-        return sort === 'asc'
+      if (header.type === 'date') {
+        return header.sort === 'asc'
           ? valueA.toMillis() - valueB.toMillis()
           : valueB.toMillis() - valueA.toMillis();
       }
@@ -172,12 +172,12 @@ export class ExpenseService {
     const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
     const docRef = doc(expenseCollectionRef, document.id);
 
-    const header = document.headers.find(h => h.sort);
-    if (!header) {
+    const headerWithSort: ExpenseHeader | undefined = document.headers.find(h => h.sort);
+    if (!headerWithSort) {
       return { success: false, error: 'Document did not contain a sorted header and could not be saved' };
     }
 
-    const data = this.sortData(document.data.map(d => ({ ...d })), header.key, header.sort);
+    const data = this.sortData(headerWithSort as Required<ExpenseHeader>, document.data.map(d => ({ ...d })));
 
     try {
       await setDoc(docRef, {
