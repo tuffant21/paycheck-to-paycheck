@@ -143,28 +143,20 @@ export class ExpenseService {
     return data.sort((a, b) => {
       const valueA = a[header.key];
       const valueB = b[header.key];
-  
-      // Handle different types of data (e.g., strings, numbers, dates)
-      if (header.type === 'text') {
-        return header.sort === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
-      }
-  
-      if (header.type === 'number') {
-        return header.sort === 'asc' ? valueA - valueB : valueB - valueA;
-      }
 
-      if (header.type === 'checkbox') {
-        return header.sort === 'asc' ? (valueA === valueB ? 0 : valueA ? 1 : -1) : (valueA === valueB ? 0 : valueB ? 1 : -1);
+      switch (header.type) {
+        case 'number':
+          return header.sort === 'asc' ? valueA - valueB : valueB - valueA;
+        case 'checkbox':
+          return header.sort === 'asc' ? (valueA === valueB ? 0 : valueA ? 1 : -1) : (valueA === valueB ? 0 : valueB ? 1 : -1);
+        case 'text':
+        case 'date':
+          return header.sort === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+        
+        // If data type is unknown or not comparable, leave it as is
+        default:
+          return 0;
       }
-  
-      if (header.type === 'date') {
-        return header.sort === 'asc'
-          ? valueA.toMillis() - valueB.toMillis()
-          : valueB.toMillis() - valueA.toMillis();
-      }
-  
-      // If data type is unknown or not comparable, leave it as is
-      return 0;
     });
   }
 
