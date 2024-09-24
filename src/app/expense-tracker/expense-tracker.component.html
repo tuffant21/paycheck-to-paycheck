@@ -64,7 +64,7 @@
   </app-modal>
   }
 
-  <!-- Share Document / Import Modal -->
+  <!-- Share Document Modal / Import Modal / Edit Headers Modal -->
   @if (isOwner() || isEditor()) {
   <app-modal [visible]="showShareModal()" title="Manage Sharing" closeText="done" (closeAction)="closeShareModal()">
     <!-- Add new user -->
@@ -98,7 +98,7 @@
     </form>
 
     @if (flatmapAcl()) {
-    <h4 class="font-semibold mb-2">Shared With:</h4>
+    <p class="font-semibold mb-2">Shared With:</p>
     <ul class="max-h-48 overflow-y-auto border border-gray-200 rounded p-2 space-y-2">
       @for (acl of flatmapAcl(); track acl.email) {
       <li class="flex items-center justify-between hover:bg-gray-100">
@@ -125,6 +125,51 @@
     (closeAction)="closeImportModal()">
     <p class="text-gray-600">Are you sure you want to import a document? This action will overwrite all existing data.
     </p>
+  </app-modal>
+
+  <app-modal [visible]="showEditHeadersModal()" [disabled]="updatingEditHeadersModal() || editHeadersModalFormGroup().invalid"
+    [loading]="updatingEditHeadersModal()" title="Edit Headers" confirmText="Update" closeText="Cancel"
+    (closeAction)="closeEditHeadersModal()" (confirmAction)="confirmChangesForEditHeadersModal()">
+
+    <form class="max-h-96 overflow-y-auto border border-gray-200"
+      [formGroup]="editHeadersModalFormGroup()" (submit)="confirmChangesForEditHeadersModal()">
+
+      <table class="rounded table-auto w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Display Name</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Type</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Actions</th>
+          </tr>
+        </thead>
+        <tbody #editHeadersModalFormTableBody>
+          @for(header of editHeadersModalHeaders(); track header.key) {
+          <tr>
+            <td class="p-2">
+              <input [id]="header.key + '_display'" type="text" [formControlName]="header.key + '_display'"
+                class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </td>
+
+            <td class="p-2">
+              <app-dropdown [label]="editHeadersModalFormGroup().get(header.key + '_type')?.value || 'Select Type'"
+                [actions]="getHeaderTypeActionsForEditHeadersModal()"
+                (dropdownItemClicked)="updateEditHeaderModalControl(header, $event, '_type')"></app-dropdown>
+            </td>
+
+            <td class="p-2">
+              <app-button
+                color="gray"
+                text="delete"
+                (click)="removeHeaderEditHeadersModal(header)"
+              ></app-button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </form>
+
+    <app-button clazz="mt-4" color="blue" text="Add Header" (click)="addHeaderEditHeadersModal()"></app-button>
   </app-modal>
   }
 </div>

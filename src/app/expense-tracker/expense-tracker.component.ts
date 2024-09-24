@@ -1,14 +1,14 @@
 import { DecimalPipe, KeyValuePipe, TitleCasePipe } from "@angular/common";
 import { Component, computed, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { toSignal } from "@angular/core/rxjs-interop";
-import { FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
+import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { User } from "firebase/auth";
 import { Timestamp } from "firebase/firestore";
 import { ButtonComponent } from "../button/button.component";
 import { DropdownComponent } from "../dropdown/dropdown.component";
 import { ModalComponent } from "../modal/modal.component";
-import { ExpenseData, ExpenseHeader, ExpenseHeaderSort, ExpenseModel, isExpenseJson } from "../models/expense-model";
+import { ExpenseData, ExpenseHeader, ExpenseHeaderSort, ExpenseHeaderTypes, ExpenseModel, isExpenseJson } from "../models/expense-model";
 import { ExpenseService } from "../services/expense.service";
 import { getUser$ } from "../services/user.service";
 import { BillTableComponent } from "./bill-table/bill-table.component";
@@ -35,6 +35,7 @@ import { InputComponent } from "./input/input.component";
 export class ExpenseTrackerComponent {
   private route: ActivatedRoute = inject(ActivatedRoute);
   private router: Router = inject(Router);
+  private fb: FormBuilder = inject(FormBuilder);
   private expenseService: ExpenseService = inject(ExpenseService);
   private user: Signal<User | null> = toSignal(getUser$(), { initialValue: null });
 
@@ -95,6 +96,7 @@ export class ExpenseTrackerComponent {
   getManageDocumentActions() {
     const actions = [
       { id: 'share', label: 'Share Document' },
+      { id: 'editHeaders', label: 'Edit Headers' },
       { id: 'export', label: 'Export Document' },
       { id: 'import', label: 'Import Document' }
     ];
@@ -185,6 +187,8 @@ export class ExpenseTrackerComponent {
   handleManageDocumentActions(eventId: string) {
     if (eventId === 'share') {
       this.openShareModal();
+    } else if (eventId === 'editHeaders') {
+      this.openEditHeadersModal();
     } else if (eventId === 'export') {
       this.exportDocument()
     } else if (eventId === 'import') {
@@ -509,5 +513,93 @@ export class ExpenseTrackerComponent {
 
   closeImportModal() {
     this.showImportModal.set(false);
+  }
+
+  // Edit Headers Modal
+  showEditHeadersModal: WritableSignal<boolean> = signal(false);
+  updatingEditHeadersModal: WritableSignal<boolean> = signal(false);
+  editHeadersModalHeaders: WritableSignal<ExpenseHeader[]> = signal([]);
+  @ViewChild('editHeadersModalFormTableBody') editHeadersModalFormTableBody!: ElementRef;
+
+  private atLeastOneFieldValidator(): ValidatorFn {
+    return (formGroup: AbstractControl): ValidationErrors | null => {
+      const controls = formGroup.value;
+      
+      // Check if at least one control has a non-empty value
+      const hasAtLeastOneField = Object.keys(controls).some(key => {
+        const value = controls[key];
+        return value !== null && value !== undefined && value !== '';
+      });
+  
+      return hasAtLeastOneField ? null : { atLeastOneField: true };
+    };
+  }
+
+  editHeadersModalFormGroup: Signal<FormGroup> = computed(() => {
+    const typeMatcher = `^(${ExpenseHeaderTypes.join('|')})$`;
+    let group = {};
+
+    this.editHeadersModalHeaders().forEach(h => {
+      if (!h.key) {
+        return;
+      }
+
+      group = {
+        ...group,
+        [h.key + '_display']: [h.display, [Validators.required, Validators.minLength(1)]],
+        [h.key + '_type']: [h.type, [Validators.required, Validators.pattern(typeMatcher)]]
+      };
+    });
+
+    return this.fb.group(group, { validators: this.atLeastOneFieldValidator() });
+  });
+
+  getHeaderTypeActionsForEditHeadersModal(): { id: string, label: string }[] {
+    return ExpenseHeaderTypes.map(ht => ({
+      id: ht,
+      label: ht
+    }));
+  }
+
+  openEditHeadersModal() {
+    this.editHeadersModalHeaders.set(this.headers());
+    this.showEditHeadersModal.set(true);
+  }
+
+  closeEditHeadersModal() {
+    this.showEditHeadersModal.set(false);
+  }
+
+  updateEditHeaderModalControl(header: ExpenseHeader, event: string, property: '_type' | '_display') {
+    const control = this.editHeadersModalFormGroup().get(header.key + property);
+    control?.setValue(event);
+    control?.updateValueAndValidity();
+  }
+
+  addHeaderEditHeadersModal() {
+    this.editHeadersModalHeaders.update((previous: ExpenseHeader[]) => {
+      return [...previous, { display: '', key: crypto.randomUUID(), type: 'text' }]
+    });
+
+    // give the computed value time to compute the new values before scrolling
+    setTimeout(() => {
+      const tableRow: HTMLTableRowElement | null = this.editHeadersModalFormTableBody.nativeElement.lastElementChild;
+      const tableData: HTMLTableCellElement | null = tableRow?.firstElementChild as HTMLTableCellElement;
+      const input: HTMLInputElement | null = tableData?.firstElementChild as HTMLInputElement;
+      input?.focus()
+    }, 50);
+  }
+
+  removeHeaderEditHeadersModal(header: ExpenseHeader) {
+    this.editHeadersModalHeaders.update((previous: ExpenseHeader[]) => {
+      return previous.filter(h => h !== header);
+    });
+  }
+
+  confirmChangesForEditHeadersModal() {
+    this.updatingEditHeadersModal.set(true);
+    this.updatingEditHeadersModal.set(false);
+
+    this.closeEditHeadersModal();
   }
 }

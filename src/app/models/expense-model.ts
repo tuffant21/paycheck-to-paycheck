@@ -1,6 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 
-export type ExpenseHeaderType = 'text' | 'checkbox' | 'number' | 'date';
+export const ExpenseHeaderTypes = ['text', 'checkbox', 'number', 'date'] as const;
+export type ExpenseHeaderType = typeof ExpenseHeaderTypes[number];
 export type ExpenseHeaderSort = 'asc' | 'desc';
 export type ExpenseHeader = { 
   key: string,
