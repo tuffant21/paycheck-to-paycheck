@@ -2,4 +2,13 @@
   [title]="title"
   [buttonText]="buttonText"
   [onSubmitAction]="submitAction"
-></app-auth-shared>
+>
+  <!-- Links for Reset Password and Create Account -->
+  <div class="flex justify-between items-center">
+    <!-- Create Account Link -->
+    <a routerLink="/sign-up" class="text-sm text-blue-500 hover:text-blue-600 hover:underline">Create an account</a>
+
+    <!-- Forgot Password Link -->
+    <a routerLink="/reset-password" class="text-sm text-blue-500 hover:text-blue-600 hover:underline">Forgot password?</a>
+  </div>
+</app-auth-shared>

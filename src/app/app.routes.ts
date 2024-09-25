@@ -21,6 +21,12 @@ export const routes: Routes = [
     data: { redirectLoggedInTo: '/expense-tracker', requiresLoggedOut: true }
   },
   {
+    path: 'reset-password',
+    loadComponent: () => import('./reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
+    canMatch: [authGuard],
+    data: { redirectLoggedInTo: '/expense-tracker', requiresLoggedOut: true }
+  },
+  {
     path: 'documents',
     loadComponent: () => import('./documents/documents.component').then(m => m.DocumentsComponent),
     canMatch: [authGuard],

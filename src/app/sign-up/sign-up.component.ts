@@ -1,12 +1,14 @@
 import { Component } from '@angular/core';
 import { Auth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { AuthSharedComponent } from "../auth-shared/auth-shared.component";
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-sign-up',
   standalone: true,
   imports: [
-    AuthSharedComponent
+    AuthSharedComponent,
+    RouterLink
   ],
   templateUrl: './sign-up.component.html',
   styleUrl: './sign-up.component.scss'

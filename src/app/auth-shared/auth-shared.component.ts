@@ -1,10 +1,10 @@
+import { NgClass } from "@angular/common";
 import { Component, inject, input, signal, WritableSignal } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
-import { NgClass } from "@angular/common";
 import { Auth, GoogleAuthProvider, signInWithPopup, UserCredential } from 'firebase/auth';
-import { FIREBASE_AUTH } from "../providers/firebase-auth.provider";
 import { ButtonComponent } from "../button/button.component";
+import { FIREBASE_AUTH } from "../providers/firebase-auth.provider";
 
 @Component({
   selector: 'app-auth-shared',
