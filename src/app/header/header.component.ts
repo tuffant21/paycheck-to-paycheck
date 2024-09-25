@@ -6,6 +6,8 @@ import { Auth, signOut, User } from "firebase/auth";
 import { ButtonComponent } from "../button/button.component";
 import { FIREBASE_AUTH } from "../providers/firebase-auth.provider";
 import { getUser$ } from "../services/user.service";
+import { Analytics, logEvent } from "firebase/analytics";
+import { FIREBASE_ANALYTICS } from "../providers/firebase-analytics.provider";
 
 @Component({
   selector: 'app-header',
@@ -20,6 +22,7 @@ import { getUser$ } from "../services/user.service";
 export class HeaderComponent {
   private auth: Auth = inject(FIREBASE_AUTH);
   private router: Router = inject(Router);
+  private analytics: Analytics = inject(FIREBASE_ANALYTICS);
   public user: Signal<User | null> = toSignal(getUser$(), { initialValue: null });
   public menuClosed: WritableSignal<boolean> = signal(true);
 
@@ -31,6 +34,7 @@ export class HeaderComponent {
   public signOut() {
     signOut(this.auth)
       .then(() => {
+        logEvent(this.analytics, 'sign_out');
         this.navigateTo('/');
       })
       .catch((error) => {

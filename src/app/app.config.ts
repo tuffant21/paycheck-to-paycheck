@@ -5,6 +5,7 @@ import { routes } from './app.routes';
 import { provideFirebaseApp } from "./providers/firebase-app.provider";
 import { provideFirebaseAuth } from "./providers/firebase-auth.provider";
 import { provideFirebaseFirestore } from "./providers/firebase-firestore.provider";
+import { provideFirebaseAnalytics } from './providers/firebase-analytics.provider';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -12,6 +13,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withViewTransitions(), withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })),
     provideFirebaseApp(),
     provideFirebaseAuth(),
-    provideFirebaseFirestore()
+    provideFirebaseFirestore(),
+    provideFirebaseAnalytics()
   ]
 };

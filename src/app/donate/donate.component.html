@@ -9,7 +9,7 @@
 
   <!-- Donation Options -->
   <div class="flex flex-col space-y-4 mb-8">
-    <a [href]="getFiveDollarLink()" target="_blank">
+    <a [href]="getFiveDollarLink()" target="_blank" (click)="logDonateEvent(5)">
       <app-button
         text="Donate $5"
         color="blue"
@@ -17,7 +17,7 @@
         padding="lg"
       ></app-button>
     </a>
-    <a [href]="getTenDollarLink()" target="_blank">
+    <a [href]="getTenDollarLink()" target="_blank" (click)="logDonateEvent(10)">
       <app-button
         text="Donate $10"
         color="blue"
@@ -25,7 +25,7 @@
         padding="lg"
       ></app-button>
     </a>
-    <a [href]="getTwentyDollarLink()" target="_blank">
+    <a [href]="getTwentyDollarLink()" target="_blank" (click)="logDonateEvent(20)">
       <app-button
         text="Donate $20"
         color="blue"
@@ -33,7 +33,7 @@
         padding="lg"
       ></app-button>
     </a>
-    <a [href]="getFiftyDollarLink()" target="_blank">
+    <a [href]="getFiftyDollarLink()" target="_blank" (click)="logDonateEvent(50)">
       <app-button
         text="Donate $50"
         color="blue"
@@ -41,7 +41,7 @@
         padding="lg"
       ></app-button>
     </a>
-    <a [href]="getCustomAmountLink()" target="_blank">
+    <a [href]="getCustomAmountLink()" target="_blank" (click)="logDonateEvent()">
       <app-button
         text="Donate Custom Amount"
         color="blue"
@@ -53,7 +53,7 @@
 
   <!-- Payment Integration (Example PayPal Button) -->
   <div class="text-center">
-    <a href="https://paypal.me/tuffant21" target="_blank">
+    <a href="https://paypal.me/tuffant21" target="_blank" (click)="logDonateEvent()">
       <app-button
         text="Donate with PayPal"
         color="green"

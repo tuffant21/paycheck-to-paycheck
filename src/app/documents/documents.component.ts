@@ -5,6 +5,8 @@ import { OrderByDirection, QueryDocumentSnapshot, QuerySnapshot, startAfter, sta
 import { ButtonComponent } from "../button/button.component";
 import { ExpenseModel } from "../models/expense-model";
 import { ExpenseService } from "../services/expense.service";
+import { FIREBASE_ANALYTICS } from "../providers/firebase-analytics.provider";
+import { logEvent } from "firebase/analytics";
 
 @Component({
   selector: 'app-documents',
@@ -21,6 +23,7 @@ import { ExpenseService } from "../services/expense.service";
 export class DocumentsComponent implements OnInit {
   // Inject dependencies
   private router = inject(Router);
+  private analytics = inject(FIREBASE_ANALYTICS);
   private expenseService = inject(ExpenseService);
 
   // Reactive signals
@@ -65,6 +68,7 @@ export class DocumentsComponent implements OnInit {
     const nextSnapshot = this.nextSnapshot();
 
     if (currentSnapshot && nextSnapshot) {
+      logEvent(this.analytics, 'next_page_documents');
       const previousStartAt = currentSnapshot.docs[0];
       const startAfterLastDoc = nextSnapshot.docs[nextSnapshot.size - 1];
 
@@ -85,6 +89,7 @@ export class DocumentsComponent implements OnInit {
 
   async previousPage(): Promise<void> {
     if (this.hasPrevious()) {
+      logEvent(this.analytics, 'previous_page_documents');
       const previousRef = this.previousSnapshotStart()[this.previousSnapshotStart().length - 1];
       this.nextSnapshot.set(this.currentSnapshot());
       this.previousSnapshotStart.update((prev) => prev.slice(0, prev.length - 1));
@@ -99,13 +104,17 @@ export class DocumentsComponent implements OnInit {
 
   applyFilter(filter: 'all' | 'owned' | 'shared'): void {
     this.filter.set(filter); // Set the new filter
+    logEvent(this.analytics, 'filter_documents', { filter });
     this.resetSnapshots();
   }
 
   applySort(sortBy: 'created' | 'modified'): void {
     if (this.sortBy() === sortBy) {
-      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+      const direction = this.sortDirection() === 'asc' ? 'desc' : 'asc';
+      logEvent(this.analytics, 'sort_documents', { sort: sortBy, direction });
+      this.sortDirection.set(direction);
     } else {
+      logEvent(this.analytics, 'sort_documents', { sort: sortBy, direction: 'asc' });
       this.sortDirection.set('asc');
       this.sortBy.set(sortBy);
     }
@@ -114,6 +123,7 @@ export class DocumentsComponent implements OnInit {
   }
 
   async createDocument(): Promise<void> {
+    logEvent(this.analytics, 'create_document');
     this.creatingNewDocument.set(true);
     const resp = await this.expenseService.createDocument();
     this.creatingNewDocument.set(false);

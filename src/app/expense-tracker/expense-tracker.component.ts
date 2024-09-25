@@ -12,6 +12,8 @@ import { ExpenseService } from "../services/expense.service";
 import { getUser$ } from "../services/user.service";
 import { BillTableComponent } from "./bill-table/bill-table.component";
 import { InputComponent } from "./input/input.component";
+import { Analytics, logEvent } from "firebase/analytics";
+import { FIREBASE_ANALYTICS } from "../providers/firebase-analytics.provider";
 
 @Component({
   selector: 'app-expense-tracker',
@@ -31,6 +33,7 @@ import { InputComponent } from "./input/input.component";
 export class ExpenseTrackerComponent {
   private route: ActivatedRoute = inject(ActivatedRoute);
   private router: Router = inject(Router);
+  private analytics: Analytics = inject(FIREBASE_ANALYTICS);
   private expenseService: ExpenseService = inject(ExpenseService);
   private user: Signal<User | null> = toSignal(getUser$(), { initialValue: null });
 
@@ -102,6 +105,7 @@ export class ExpenseTrackerComponent {
   }
 
   private exportDocument() {
+    logEvent(this.analytics, 'export_document');
     const toExport: Partial<ExpenseModel> = {
       headers: this.document()?.headers,
       data: this.document()?.data,
@@ -127,6 +131,7 @@ export class ExpenseTrackerComponent {
   }
 
   importDocument(event: Event) {
+    logEvent(this.analytics, 'import_document');
     const inputElement = event.target as HTMLInputElement;
     const file = inputElement.files?.[0];
     const document = this.document();
@@ -198,6 +203,8 @@ export class ExpenseTrackerComponent {
     const document = this.document();
     if (!document) return;
 
+    logEvent(this.analytics, 'update_document', { event: 'update_title', title });
+
     const resp = await this.expenseService.updateDocument({
       ...document,
       title
@@ -214,6 +221,8 @@ export class ExpenseTrackerComponent {
   async saveCell({ bill, key, value }: { bill: ExpenseData, key: string, value: any }) {
     const document = this.document();
     if (!document) return;
+
+    logEvent(this.analytics, 'update_document', { event: 'update_cell', [key]: value });
 
     const data = document.data.filter(d => d !== bill);
 
@@ -256,6 +265,8 @@ export class ExpenseTrackerComponent {
       header.sort = header.sort === 'asc' ? 'desc' : 'asc';
     }
 
+    logEvent(this.analytics, 'update_document', { event: 'update_sort', sort: headerKey, direction: header.sort });
+
     const resp = await this.expenseService.updateDocument({
       ...document,
       headers
@@ -269,6 +280,8 @@ export class ExpenseTrackerComponent {
   async addNewBill() {
     const document = this.document();
     if (!document) return;
+
+    logEvent(this.analytics, 'update_document', { event: 'add_bill' });
 
     let newBill = { __disabled: false, __id: crypto.randomUUID() };
 
@@ -297,6 +310,8 @@ export class ExpenseTrackerComponent {
 
     const otherItems = document.data.filter(d => d !== data);
 
+    logEvent(this.analytics, 'update_document', { event: 'update_disabled', disabled: !data.__disabled });
+
     const resp = await this.expenseService.updateDocument({
       ...document,
       data: [
@@ -315,10 +330,12 @@ export class ExpenseTrackerComponent {
   deletingBill: WritableSignal<boolean> = signal(false);
 
   openDeleteBillModal(data: ExpenseData) {
+    logEvent(this.analytics, 'modal', { open: true, name: 'delete_bill' });
     this.pendingDeleteBill.set(data);
   }
 
   closeDeleteBillModal() {
+    logEvent(this.analytics, 'modal', { open: false, name: 'delete_bill' });
     this.pendingDeleteBill.set(null);
   }
 
@@ -330,6 +347,8 @@ export class ExpenseTrackerComponent {
     const document = this.document();
     const deleteBill = this.pendingDeleteBill();
     if (!document || !deleteBill) return;
+
+    logEvent(this.analytics, 'update_document', { event: 'delete_bill', deleteBill });
 
     const otherItems = document.data.filter(d => d !== deleteBill);
 
@@ -354,10 +373,12 @@ export class ExpenseTrackerComponent {
   deletingDocument: WritableSignal<boolean> = signal(false);
 
   openDeleteDocumentModal() {
+    logEvent(this.analytics, 'modal', { open: true, name: 'delete_document' });
     this.showDeleteDocumentModal.set(true);
   }
 
   closeDeleteDocumentModal() {
+    logEvent(this.analytics, 'modal', { open: false, name: 'delete_document' });
     this.showDeleteDocumentModal.set(false);
   }
 
@@ -368,6 +389,8 @@ export class ExpenseTrackerComponent {
     if (!document) {
       return;
     }
+
+    logEvent(this.analytics, 'delete_document');
 
     this.deletingDocument.set(true);
     const resp = await this.expenseService.deleteDocument(document);
@@ -391,10 +414,12 @@ export class ExpenseTrackerComponent {
   updatingUserAcl: WritableSignal<{ role: string, email: string } | null> = signal(null);
 
   openShareModal() {
+    logEvent(this.analytics, 'modal', { open: true, name: 'share_document' });
     this.showShareModal.set(true);
   }
 
   closeShareModal() {
+    logEvent(this.analytics, 'modal', { open: false, name: 'share_document' });
     this.showShareModal.set(false);
   }
 
@@ -424,6 +449,8 @@ export class ExpenseTrackerComponent {
     if (this.shareEmail.invalid || !document || !role || !email) {
       return;
     }
+
+    logEvent(this.analytics, 'update_document', { event: 'update_acl', email, role });
 
     this.sendingShareRequest.set(true);
     const resp = await this.expenseService.addToAcl(document, role, email);
@@ -461,6 +488,8 @@ export class ExpenseTrackerComponent {
       return;
     }
 
+    logEvent(this.analytics, 'update_document', { event: 'update_acl', email: acl.email, role: acl.role });
+
     this.updatingUserAcl.set(acl);
     const resp = await this.expenseService.addToAcl(
       document,
@@ -477,6 +506,7 @@ export class ExpenseTrackerComponent {
     const document = this.document();
     const acl = this.pendingRemoveAccess();
     if (acl && document) {
+      logEvent(this.analytics, 'update_document', { event: 'update_acl', email: acl.email, role: null });
       this.showConfirmRemoveAccessModal.set(false);
       this.updatingUserAcl.set(acl);
       const resp = await this.expenseService.removeFromAcl(document, acl.email);
@@ -499,15 +529,17 @@ export class ExpenseTrackerComponent {
   importingFile: WritableSignal<boolean> = signal(false);
 
   openImportModal() {
+    logEvent(this.analytics, 'modal', { open: true, name: 'import_document' });
     this.showImportModal.set(true);
+  }
+
+  closeImportModal() {
+    logEvent(this.analytics, 'modal', { open: false, name: 'import_document' });
+    this.showImportModal.set(false);
   }
 
   importModalConfirmAction() {
     this.fileImportInput.nativeElement.click();
-  }
-
-  closeImportModal() {
-    this.showImportModal.set(false);
   }
 
 
@@ -515,10 +547,12 @@ export class ExpenseTrackerComponent {
   showWarningForEditHeadersModal: WritableSignal<boolean> = signal(false);
 
   openWarningForEditHeadersModal() {
+    logEvent(this.analytics, 'modal', { open: true, name: 'edit_headers_warning' });
     this.showWarningForEditHeadersModal.set(true);
   }
 
   closeWarningForEditHeadersModal() {
+    logEvent(this.analytics, 'modal', { open: false, name: 'edit_headers_warning' });
     this.showWarningForEditHeadersModal.set(false);
   }
 
@@ -528,10 +562,12 @@ export class ExpenseTrackerComponent {
   @ViewChild('editHeadersModalFormTableBody') editHeadersModalFormTableBody!: ElementRef;
 
   openEditHeadersModal() {
+    logEvent(this.analytics, 'modal', { open: true, name: 'edit_headers' });
     this.showEditHeadersModal.set(true);
   }
 
   closeEditHeadersModal() {
+    logEvent(this.analytics, 'modal', { open: false, name: 'edit_headers' });
     this.showEditHeadersModal.set(false);
   }
 
@@ -547,6 +583,8 @@ export class ExpenseTrackerComponent {
     if (!document) return;
 
     const newHeader: ExpenseHeader = { display: '', key: crypto.randomUUID(), type: 'text' };
+  
+    logEvent(this.analytics, 'update_document', { event: 'add_header' });
 
     this.addingNewHeader.set(true);
     const resp = await this.expenseService.updateDocument({
@@ -588,6 +626,8 @@ export class ExpenseTrackerComponent {
     const newValue = (event.target as HTMLInputElement).value;
     const newKey = this.toCamelCase(newValue);
 
+    logEvent(this.analytics, 'update_document', { event: 'update_header', display: newValue });
+
     // update header
     const headers = document.headers.map(h => {
       const clone = {...h};
@@ -627,6 +667,8 @@ export class ExpenseTrackerComponent {
     const document = this.document();
     if (!document || !isExpenseHeaderType(type)) return;
 
+    logEvent(this.analytics, 'update_document', { event: 'update_header', type });
+
     // update header type
     const headers = document.headers.map(h => {
       const clone = {...h};
@@ -661,6 +703,8 @@ export class ExpenseTrackerComponent {
   async removeHeader_editHeadersModal(header: ExpenseHeader) {
     const document = this.document();
     if (!document) return;
+
+    logEvent(this.analytics, 'update_document', { event: 'remove_header', header });
 
     // update header type
     const updatedHeaders = document.headers.filter(h => h !== header).map(h => ({...h}));

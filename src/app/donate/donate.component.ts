@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { environment } from "../../environments/environment";
 import { ButtonComponent } from "../button/button.component";
+import { Analytics, logEvent } from 'firebase/analytics';
+import { FIREBASE_ANALYTICS } from '../providers/firebase-analytics.provider';
 
 @Component({
   selector: 'app-donate',
@@ -12,6 +14,8 @@ import { ButtonComponent } from "../button/button.component";
   styleUrl: './donate.component.scss'
 })
 export class DonateComponent {
+  private analytics: Analytics = inject(FIREBASE_ANALYTICS);
+
   getFiveDollarLink(): string {
     return environment.fiveDollarLink;
   }
@@ -30,5 +34,9 @@ export class DonateComponent {
 
   getCustomAmountLink(): string {
     return environment.customAmountLink;
+  }
+
+  logDonateEvent(value?: number) {
+    logEvent(this.analytics, 'donate', { value });
   }
 }

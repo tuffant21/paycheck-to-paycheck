@@ -2,8 +2,10 @@ import { NgClass } from "@angular/common";
 import { Component, inject, input, signal, WritableSignal } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
+import { Analytics, logEvent } from "firebase/analytics";
 import { Auth, GoogleAuthProvider, signInWithPopup, UserCredential } from 'firebase/auth';
 import { ButtonComponent } from "../button/button.component";
+import { FIREBASE_ANALYTICS } from "../providers/firebase-analytics.provider";
 import { FIREBASE_AUTH } from "../providers/firebase-auth.provider";
 
 @Component({
@@ -24,6 +26,7 @@ export class AuthSharedComponent {
 
   private auth: Auth = inject(FIREBASE_AUTH);
   private router: Router = inject(Router);
+  private analytics: Analytics = inject(FIREBASE_ANALYTICS);
   private fb: FormBuilder = inject(FormBuilder);
   private StrongPasswordRegx: RegExp = /^(?=[^A-Z]*[A-Z])(?=[^a-z]*[a-z])(?=\D*\d).{8,}$/;
 
@@ -89,6 +92,12 @@ export class AuthSharedComponent {
   private manageRedirectAndError(fn: () => Promise<UserCredential>) {
     fn()
       .then(() => {
+        if (this.buttonText() === 'Sign In') {
+          logEvent(this.analytics, 'login');
+        } else {
+          logEvent(this.analytics, 'sign_up');
+        }
+
         // On successful signup, navigate to another page
         this.router.navigate(['/documents']);
       })
