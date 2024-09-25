@@ -16,11 +16,10 @@ import {
   QueryNonFilterConstraint,
   QuerySnapshot,
   setDoc,
-  Timestamp,
   where
 } from 'firebase/firestore';
 import { Observable } from "rxjs";
-import { ExpenseData, ExpenseHeader, ExpenseHeaderSort, ExpenseHeaderType, ExpenseModel } from "../models/expense-model";
+import { ExpenseData, ExpenseHeader, ExpenseModel } from "../models/expense-model";
 import { FIREBASE_FIRESTORE } from "../providers/firebase-firestore.provider";
 import { RestResult } from './result.type';
 import { getUser$ } from "./user.service";
@@ -151,6 +150,16 @@ export class ExpenseService {
           return header.sort === 'asc' ? (valueA === valueB ? 0 : valueA ? 1 : -1) : (valueA === valueB ? 0 : valueB ? 1 : -1);
         case 'text':
         case 'date':
+          if (valueA === undefined || valueA === null) {
+            // Assuming undefined or null values should be considered smaller and sorted first
+            return header.sort === 'asc' ? -1 : 1;
+          }
+          
+          if (valueB === undefined || valueB === null) {
+              // Assuming undefined or null values should be considered smaller and sorted first
+              return header.sort === 'asc' ? 1 : -1;
+          }
+
           return header.sort === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
         
         // If data type is unknown or not comparable, leave it as is
@@ -163,6 +172,10 @@ export class ExpenseService {
   async updateDocument(document: ExpenseModel): RestResult {
     const expenseCollectionRef = collection(this.firestore, this.EXPENSES);
     const docRef = doc(expenseCollectionRef, document.id);
+
+    if (document.headers.length === 0) {
+      return { success: false, error: 'Document requires at least one header' };
+    }
 
     const headerWithSort: ExpenseHeader | undefined = document.headers.find(h => h.sort);
     if (!headerWithSort) {

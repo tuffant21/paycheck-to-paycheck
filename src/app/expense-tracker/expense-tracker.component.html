@@ -127,12 +127,17 @@
     </p>
   </app-modal>
 
-  <app-modal [visible]="showEditHeadersModal()" [disabled]="updatingEditHeadersModal() || editHeadersModalFormGroup().invalid"
-    [loading]="updatingEditHeadersModal()" title="Edit Headers" confirmText="Update" closeText="Cancel"
-    (closeAction)="closeEditHeadersModal()" (confirmAction)="confirmChangesForEditHeadersModal()">
+  <app-modal [visible]="showWarningForEditHeadersModal()" title="Edit Headers" closeText="Cancel" confirmText="Continue"
+    (closeAction)="closeWarningForEditHeadersModal()"
+    (confirmAction)="closeWarningForEditHeadersModal(); openEditHeadersModal()">
+    <p class="text-gray-600">Are you sure you want to edit your headers? Removing headers is permanent and cannot be
+      undone.</p>
+  </app-modal>
 
-    <form class="max-h-96 overflow-y-auto border border-gray-200"
-      [formGroup]="editHeadersModalFormGroup()" (submit)="confirmChangesForEditHeadersModal()">
+  <app-modal [visible]="showEditHeadersModal()" [allowCloseOnEnter]="false" [allowCloseOnEscape]="false"
+    title="Edit Headers" closeText="Close" (closeAction)="closeEditHeadersModal()">
+
+    <div class="max-h-96 overflow-y-auto border border-gray-200">
 
       <table class="rounded table-auto w-full">
         <thead class="bg-gray-50">
@@ -143,33 +148,30 @@
           </tr>
         </thead>
         <tbody #editHeadersModalFormTableBody>
-          @for(header of editHeadersModalHeaders(); track header.key) {
+          @for(header of headers(); track header.key) {
           <tr>
             <td class="p-2">
-              <input [id]="header.key + '_display'" type="text" [formControlName]="header.key + '_display'"
+              <input type="text" [value]="header.display"
+                (change)="updateHeaderDisplay_editHeadersModal(header, $event)"
                 class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
             </td>
 
             <td class="p-2">
-              <app-dropdown [label]="editHeadersModalFormGroup().get(header.key + '_type')?.value || 'Select Type'"
-                [actions]="getHeaderTypeActionsForEditHeadersModal()"
-                (dropdownItemClicked)="updateEditHeaderModalControl(header, $event, '_type')"></app-dropdown>
+              <app-dropdown [label]="header.type || 'Select Type'" [actions]="getActionsForDropdown_editHeadersModal()"
+                (dropdownItemClicked)="updateHeaderType_editHeadersModal(header, $event)"></app-dropdown>
             </td>
 
             <td class="p-2">
-              <app-button
-                color="gray"
-                text="delete"
-                (click)="removeHeaderEditHeadersModal(header)"
-              ></app-button>
+              <app-button color="gray" text="delete" (click)="removeHeader_editHeadersModal(header)"></app-button>
             </td>
           </tr>
           }
         </tbody>
       </table>
-    </form>
+    </div>
 
-    <app-button clazz="mt-4" color="blue" text="Add Header" (click)="addHeaderEditHeadersModal()"></app-button>
+    <app-button clazz="mt-4" color="blue" text="Add Header" [disabled]="addingNewHeader()" [loading]="addingNewHeader()"
+      (click)="addHeader_editHeadersModal()"></app-button>
   </app-modal>
   }
 </div>

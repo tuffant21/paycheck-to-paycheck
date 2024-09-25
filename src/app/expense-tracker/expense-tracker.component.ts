@@ -1,14 +1,13 @@
-import { DecimalPipe, KeyValuePipe, TitleCasePipe } from "@angular/common";
+import { KeyValuePipe } from "@angular/common";
 import { Component, computed, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { toSignal } from "@angular/core/rxjs-interop";
-import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from "@angular/forms";
+import { FormControl, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { User } from "firebase/auth";
-import { Timestamp } from "firebase/firestore";
 import { ButtonComponent } from "../button/button.component";
 import { DropdownComponent } from "../dropdown/dropdown.component";
 import { ModalComponent } from "../modal/modal.component";
-import { ExpenseData, ExpenseHeader, ExpenseHeaderSort, ExpenseHeaderTypes, ExpenseModel, isExpenseJson } from "../models/expense-model";
+import { ExpenseData, ExpenseHeader, ExpenseHeaderTypes, ExpenseModel, isExpenseHeaderType, isExpenseJson } from "../models/expense-model";
 import { ExpenseService } from "../services/expense.service";
 import { getUser$ } from "../services/user.service";
 import { BillTableComponent } from "./bill-table/bill-table.component";
@@ -18,24 +17,20 @@ import { InputComponent } from "./input/input.component";
   selector: 'app-expense-tracker',
   standalone: true,
   imports: [
-    DecimalPipe,
-    FormsModule,
     ModalComponent,
     DropdownComponent,
-    TitleCasePipe,
     ReactiveFormsModule,
     ButtonComponent,
     InputComponent,
     KeyValuePipe,
     BillTableComponent
-],
+  ],
   templateUrl: './expense-tracker.component.html',
   styleUrl: './expense-tracker.component.scss'
 })
 export class ExpenseTrackerComponent {
   private route: ActivatedRoute = inject(ActivatedRoute);
   private router: Router = inject(Router);
-  private fb: FormBuilder = inject(FormBuilder);
   private expenseService: ExpenseService = inject(ExpenseService);
   private user: Signal<User | null> = toSignal(getUser$(), { initialValue: null });
 
@@ -58,7 +53,7 @@ export class ExpenseTrackerComponent {
 
     return [...editors, ...viewers];
   });
-  
+
   // permissions
   isOwner: Signal<boolean> = computed(() => {
     const user = this.user();
@@ -117,14 +112,14 @@ export class ExpenseTrackerComponent {
 
     // Create a Blob object for the JSON file
     const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
-    
+
     // Create a download link
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
     link.setAttribute('download', 'exported_data.json');
     link.style.visibility = 'hidden';
-    
+
     // Append link to the body and trigger click
     document.body.appendChild(link);
     link.click();
@@ -135,37 +130,37 @@ export class ExpenseTrackerComponent {
     const inputElement = event.target as HTMLInputElement;
     const file = inputElement.files?.[0];
     const document = this.document();
-  
+
     // Early return if file or document is not present
     if (!file || !document) {
       return;
     }
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e: ProgressEvent<FileReader>) => {
       const result = e.target?.result;
-  
+
       // Early return if no result from reader
       if (!result) {
         return window.alert('Sorry, there was an error opening your input file.');
       }
-  
+
       try {
         this.importingFile.set(true);
         const jsonContent = JSON.parse(result as string);
-  
+
         // Validate JSON structure
         if (!isExpenseJson(jsonContent)) {
           return window.alert('Sorry, there was an error opening your input file.');
         }
-  
+
         // Update document with JSON content
         const resp = await this.expenseService.updateDocument({
           ...document,
           ...jsonContent,
         });
-  
+
         // Handle response
         if (!resp.success) {
           return window.alert(resp.error);
@@ -176,11 +171,11 @@ export class ExpenseTrackerComponent {
         this.importingFile.set(false);
         this.closeImportModal();
       }
-  
+
       // Reset the file input to allow re-triggering the change event later
       inputElement.value = '';
     };
-  
+
     reader.readAsText(file);
   }
 
@@ -188,7 +183,7 @@ export class ExpenseTrackerComponent {
     if (eventId === 'share') {
       this.openShareModal();
     } else if (eventId === 'editHeaders') {
-      this.openEditHeadersModal();
+      this.openWarningForEditHeadersModal();
     } else if (eventId === 'export') {
       this.exportDocument()
     } else if (eventId === 'import') {
@@ -249,18 +244,18 @@ export class ExpenseTrackerComponent {
 
       return header;
     });
-  
+
     // Find the header that corresponds to the clicked column
     const header = headers.find(h => h.key === headerKey);
     if (!header) return;
-  
+
     // Toggle the sort state: 'asc' -> 'desc' -> 'asc'
     if (!header.sort) {
       header.sort = 'asc';
     } else {
       header.sort = header.sort === 'asc' ? 'desc' : 'asc';
     }
-    
+
     const resp = await this.expenseService.updateDocument({
       ...document,
       headers
@@ -277,7 +272,7 @@ export class ExpenseTrackerComponent {
 
     let newBill = { __disabled: false, __id: crypto.randomUUID() };
 
-    for(const header of document.headers) {
+    for (const header of document.headers) {
       newBill = { ...newBill, [header.key]: '' }
     }
 
@@ -377,7 +372,7 @@ export class ExpenseTrackerComponent {
     this.deletingDocument.set(true);
     const resp = await this.expenseService.deleteDocument(document);
     this.deletingDocument.set(false);
-    
+
     if (resp.success) {
       this.router.navigate(['/documents']);
     } else {
@@ -389,7 +384,7 @@ export class ExpenseTrackerComponent {
   showShareModal: WritableSignal<boolean> = signal(false);
   pendingRemoveAccess: WritableSignal<{ role: string, email: string } | null> = signal(null);
   showConfirmRemoveAccessModal: WritableSignal<boolean> = signal(false);
-  shareEmail = new FormControl('', [ Validators.required, Validators.email ]);
+  shareEmail = new FormControl('', [Validators.required, Validators.email]);
   newUserRole: WritableSignal<'viewer' | 'editor' | null> = signal(null);
   emailError: WritableSignal<string> = signal('');
   sendingShareRequest: WritableSignal<boolean> = signal(false);
@@ -468,7 +463,7 @@ export class ExpenseTrackerComponent {
 
     this.updatingUserAcl.set(acl);
     const resp = await this.expenseService.addToAcl(
-      document, 
+      document,
       eventId === 'viewer' ? 'viewers' : 'editors',
       acl.email
     );
@@ -515,54 +510,24 @@ export class ExpenseTrackerComponent {
     this.showImportModal.set(false);
   }
 
+
+  // Edit Headers Modal Warning
+  showWarningForEditHeadersModal: WritableSignal<boolean> = signal(false);
+
+  openWarningForEditHeadersModal() {
+    this.showWarningForEditHeadersModal.set(true);
+  }
+
+  closeWarningForEditHeadersModal() {
+    this.showWarningForEditHeadersModal.set(false);
+  }
+
   // Edit Headers Modal
   showEditHeadersModal: WritableSignal<boolean> = signal(false);
-  updatingEditHeadersModal: WritableSignal<boolean> = signal(false);
-  editHeadersModalHeaders: WritableSignal<ExpenseHeader[]> = signal([]);
+  addingNewHeader: WritableSignal<boolean> = signal(false);
   @ViewChild('editHeadersModalFormTableBody') editHeadersModalFormTableBody!: ElementRef;
 
-  private atLeastOneFieldValidator(): ValidatorFn {
-    return (formGroup: AbstractControl): ValidationErrors | null => {
-      const controls = formGroup.value;
-      
-      // Check if at least one control has a non-empty value
-      const hasAtLeastOneField = Object.keys(controls).some(key => {
-        const value = controls[key];
-        return value !== null && value !== undefined && value !== '';
-      });
-  
-      return hasAtLeastOneField ? null : { atLeastOneField: true };
-    };
-  }
-
-  editHeadersModalFormGroup: Signal<FormGroup> = computed(() => {
-    const typeMatcher = `^(${ExpenseHeaderTypes.join('|')})$`;
-    let group = {};
-
-    this.editHeadersModalHeaders().forEach(h => {
-      if (!h.key) {
-        return;
-      }
-
-      group = {
-        ...group,
-        [h.key + '_display']: [h.display, [Validators.required, Validators.minLength(1)]],
-        [h.key + '_type']: [h.type, [Validators.required, Validators.pattern(typeMatcher)]]
-      };
-    });
-
-    return this.fb.group(group, { validators: this.atLeastOneFieldValidator() });
-  });
-
-  getHeaderTypeActionsForEditHeadersModal(): { id: string, label: string }[] {
-    return ExpenseHeaderTypes.map(ht => ({
-      id: ht,
-      label: ht
-    }));
-  }
-
   openEditHeadersModal() {
-    this.editHeadersModalHeaders.set(this.headers());
     this.showEditHeadersModal.set(true);
   }
 
@@ -570,16 +535,32 @@ export class ExpenseTrackerComponent {
     this.showEditHeadersModal.set(false);
   }
 
-  updateEditHeaderModalControl(header: ExpenseHeader, event: string, property: '_type' | '_display') {
-    const control = this.editHeadersModalFormGroup().get(header.key + property);
-    control?.setValue(event);
-    control?.updateValueAndValidity();
+  getActionsForDropdown_editHeadersModal(): { id: string, label: string }[] {
+    return ExpenseHeaderTypes.map(ht => ({
+      id: ht,
+      label: ht
+    }));
   }
 
-  addHeaderEditHeadersModal() {
-    this.editHeadersModalHeaders.update((previous: ExpenseHeader[]) => {
-      return [...previous, { display: '', key: crypto.randomUUID(), type: 'text' }]
+  async addHeader_editHeadersModal() {
+    const document = this.document();
+    if (!document) return;
+
+    const newHeader: ExpenseHeader = { display: '', key: crypto.randomUUID(), type: 'text' };
+
+    this.addingNewHeader.set(true);
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      headers: [
+        ...document.headers,
+        newHeader
+      ]
     });
+    this.addingNewHeader.set(false);
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
 
     // give the computed value time to compute the new values before scrolling
     setTimeout(() => {
@@ -590,16 +571,120 @@ export class ExpenseTrackerComponent {
     }, 50);
   }
 
-  removeHeaderEditHeadersModal(header: ExpenseHeader) {
-    this.editHeadersModalHeaders.update((previous: ExpenseHeader[]) => {
-      return previous.filter(h => h !== header);
-    });
+  toCamelCase(str: string): string {
+    return str
+      .toLowerCase()
+      .split(' ')
+      .map((word, index) =>
+        index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+      )
+      .join('');
   }
 
-  confirmChangesForEditHeadersModal() {
-    this.updatingEditHeadersModal.set(true);
-    this.updatingEditHeadersModal.set(false);
+  async updateHeaderDisplay_editHeadersModal(header: ExpenseHeader, event: Event) {
+    const document = this.document();
+    if (!document) return;
 
-    this.closeEditHeadersModal();
+    const newValue = (event.target as HTMLInputElement).value;
+    const newKey = this.toCamelCase(newValue);
+
+    // update header
+    const headers = document.headers.map(h => {
+      const clone = {...h};
+
+      if (h === header) {
+        clone.key = newKey;
+        clone.display = newValue;
+      }
+
+      return clone;
+    });
+
+    // remove the old key and use the new key in the data
+    const data = document.data.map(d => {
+      const clone = {...d};
+
+      if (clone[header.key]) {
+        clone[newKey] = clone[header.key];
+        delete clone[header.key];
+      }
+
+      return clone;
+    });
+
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      headers,
+      data
+    });
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
+  }
+
+  async updateHeaderType_editHeadersModal(header: ExpenseHeader, type: string) {
+    const document = this.document();
+    if (!document || !isExpenseHeaderType(type)) return;
+
+    // update header type
+    const headers = document.headers.map(h => {
+      const clone = {...h};
+
+      if (h === header) {
+        clone.type = type;
+      }
+
+      return clone;
+    });
+
+    // remove all values for current data
+    const data = document.data.map(d => {
+      const clone = {...d};
+      if (clone[header.key]) {
+        delete clone[header.key];
+      }
+      return clone;
+    });
+
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      headers,
+      data
+    });
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
+  }
+
+  async removeHeader_editHeadersModal(header: ExpenseHeader) {
+    const document = this.document();
+    if (!document) return;
+
+    // update header type
+    const updatedHeaders = document.headers.filter(h => h !== header).map(h => ({...h}));
+
+    // if deleting the header that has the sort, assign sort to the first element in the updatedHeaders
+    if (header.sort && updatedHeaders[0]) {
+      updatedHeaders[0].sort = 'asc';
+    }
+
+    // remove all values for current data
+    const data = document.data.map(d => {
+      const clone = {...d};
+      delete clone[header.key];
+      return clone;
+    });
+
+    const resp = await this.expenseService.updateDocument({
+      ...document,
+      headers: updatedHeaders,
+      data
+    });
+
+    if (!resp.success) {
+      window.alert(resp.error);
+    }
   }
 }

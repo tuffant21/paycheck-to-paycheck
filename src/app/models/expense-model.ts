@@ -29,6 +29,10 @@ export type ExpenseModel<DATE_TYPE = Timestamp> = {
   };
 }
 
+export function isExpenseHeaderType(value: string): value is ExpenseHeaderType {
+  return ExpenseHeaderTypes.includes(value as ExpenseHeaderType);
+}
+
 // Helper function to check if an object matches the expected structure
 export function isExpenseJson(json: any): json is { headers: ExpenseHeader[], data: ExpenseData[] } {
   if (
