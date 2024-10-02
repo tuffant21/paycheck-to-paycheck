@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal, WritableSignal } from '@angular/core';
 import { ButtonComponent } from "../../button/button.component";
 import { ExpenseData, ExpenseHeader } from '../../models/expense-model';
 import { InputComponent } from "../input/input.component";
@@ -11,6 +11,8 @@ import { InputComponent } from "../input/input.component";
   styleUrl: './bill-table.component.scss'
 })
 export class BillTableComponent {
+  hovering: WritableSignal<ExpenseData | null> = signal(null);
+
   headers = input.required<ExpenseHeader[]>();
   data = input.required<ExpenseData[]>();
   isOwner = input.required<boolean>();

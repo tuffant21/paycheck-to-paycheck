@@ -18,11 +18,11 @@
     </thead>
     <tbody>
       @for (bill of data(); track bill.__id) {
-      <tr>
+      <tr class="hover:bg-gray-100" (mouseenter)="hovering.set(bill)" (mouseleave)="hovering.set(null)">
         @for (header of headers(); track header.key) {
         <td class="px-4 py-2 border-t border-gray-200">
           <app-input [value]="bill[header.key]" [disabled]="isViewer()" [type]="header.type"
-            (updated)="valueUpdated(bill, header.key, $event)"></app-input>
+            (updated)="valueUpdated(bill, header.key, $event)" [clazz]="hovering() === bill ? 'bg-gray-100' : ''"></app-input>
         </td>
         }
         @if (isOwner() || isEditor()) {
