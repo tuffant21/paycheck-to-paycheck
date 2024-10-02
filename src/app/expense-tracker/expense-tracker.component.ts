@@ -1,7 +1,7 @@
 import { KeyValuePipe } from "@angular/common";
 import { Component, computed, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { toSignal } from "@angular/core/rxjs-interop";
-import { FormControl, ReactiveFormsModule, Validators } from "@angular/forms";
+import { FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { User } from "firebase/auth";
 import { ButtonComponent } from "../button/button.component";
@@ -21,6 +21,7 @@ import { FIREBASE_ANALYTICS } from "../providers/firebase-analytics.provider";
   imports: [
     ModalComponent,
     DropdownComponent,
+    FormsModule,
     ReactiveFormsModule,
     ButtonComponent,
     InputComponent,
@@ -441,7 +442,8 @@ export class ExpenseTrackerComponent {
     }
   }
 
-  async shareDocument() {
+  async shareDocument(event: Event) {
+    event.stopPropagation();
     const document = this.document();
     const role = this.newUserRole() === 'viewer' ? 'viewers' : 'editors';
     const email = this.shareEmail.value;

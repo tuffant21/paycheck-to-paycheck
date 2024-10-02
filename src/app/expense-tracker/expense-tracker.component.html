@@ -68,7 +68,7 @@
   @if (isOwner() || isEditor()) {
   <app-modal [visible]="showShareModal()" title="Manage Sharing" closeText="done" (closeAction)="closeShareModal()">
     <!-- Add new user -->
-    <form (submit)="shareDocument()">
+    <form (submit)="shareDocument($event)">
       <div class="flex items-start space-x-4 mb-4">
         <!-- Email input and error container -->
         <div class="flex flex-col w-full">
